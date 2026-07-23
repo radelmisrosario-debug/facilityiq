@@ -251,7 +251,7 @@ const pageTitle=document.getElementById("page-title");
 const homeButton=document.getElementById("home-button");
 
 function getRoute(){const p=new URLSearchParams(location.search);return{asset:p.get("asset"),problem:p.get("problem"),step:p.get("step")}}
-function setRoute(params){const u=new URL(location.href);u.search="";Object.entries(params).forEach(([k,v])=>{if(v)u.searchParams.set(k,v)});history.pushState({},"",u);render()}
+function setRoute(params){const u=new URL(location.href);u.search="";Object.entries(params).forEach(([k,v])=>{if(v)u.searchParams.set(k,v)});history.pushState({},"",u);render();window.scrollTo({top:0,behavior:"smooth"})}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
 
 function renderHome(){
