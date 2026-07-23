@@ -1,36 +1,43 @@
-# AHU Troubleshooting MVP
+# FacilityIQ — Manual-Based Troubleshooting
 
-Included assets:
+This version includes:
 
-- AHU-01 — Room 804
-- AHU-02 — Room 804
-- AHU-04 — Room 805
-- AHU-05 — Location to be confirmed
-- AHU-06 — Room 192
+- AHU-01, AHU-02, AHU-04, AHU-05, AHU-06
+- Boiler-01 through Boiler-04
+- CHEM-VACP-01 and CHEM-VACP-02
+- Control-AC
+- Control-AC-Air-Dryer
+- Cummins-Generator
+- Search
+- Direct QR-code asset links
+- A View Manual button for every uploaded manual
+- Troubleshooting flows based on the uploaded manufacturer manuals
 
-Each AHU includes these guides:
+## Deploy through GitHub and Cloudflare Pages
 
-- Unit Will Not Start
-- High Space Temperature
-- Low Airflow
-- High Supply Air Temperature
-- VFD or Fan Fault
+1. Extract this ZIP.
+2. Copy all files and the `manuals` folder into your local `facilityiq` GitHub repository.
+3. In GitHub Desktop, enter a summary such as `Add manuals and equipment guides`.
+4. Click `Commit to main`.
+5. Click `Push origin`.
+6. Cloudflare Pages should deploy automatically.
 
-## Run locally
+## Important
 
-Open `index.html`, or use the Visual Studio Code Live Server extension.
+The `manuals` folder must be uploaded with the website. Do not upload only the three main files.
 
-## Direct QR-code links
+## Direct links for QR codes
 
-After hosting, use links in this format:
+Examples:
 
-- `https://your-site.com/?asset=AHU-01`
-- `https://your-site.com/?asset=AHU-02`
-- `https://your-site.com/?asset=AHU-04`
-- `https://your-site.com/?asset=AHU-05`
-- `https://your-site.com/?asset=AHU-06`
+- `https://YOUR-SITE.pages.dev/?asset=Boiler-01`
+- `https://YOUR-SITE.pages.dev/?asset=CHEM-VACP-01`
+- `https://YOUR-SITE.pages.dev/?asset=Control-AC`
+- `https://YOUR-SITE.pages.dev/?asset=Control-AC-Air-Dryer`
+- `https://YOUR-SITE.pages.dev/?asset=Cummins-Generator`
 
-## Data still needed
+## Remaining data to confirm
 
-Add the manufacturer and model for each AHU in `app.js`.
-Confirm the location for AHU-05.
+- Exact nameplate model and serial number for each asset
+- AHU-05 location
+- AHU manuals
