@@ -1,34 +1,29 @@
-# FacilityIQ Troubleshooting v1
+# FacilityIQ V02 — Troubleshooting Focus
 
-A mobile-friendly, static troubleshooting application for facility equipment.
+This release preserves all V01 assets, manuals, and troubleshooting guides and adds:
 
-## Included assets
+## New assets
+- 503-Aircon-Tech-Chiller — MultiAqua MAC-060HE-03 — Roof
+- Bry-Air-DEHU — MiniPAC Series — Room 503
+- House-AC-01 — Room 805
+- House-AC-02 — Room 805
+- House-AC-03 — Room 182
+- SCWP-01 and SCWP-02 — Secondary chilled-water pumps — Room 805
+- HWP-01 and HWP-02 — Hot-water loop pumps — Room 805
 
-- AHU-01, AHU-02, AHU-04, AHU-05, AHU-06
-- Boiler-01 through Boiler-04
-- CHEM-VACP-01 and CHEM-VACP-02
-- Control-AC and Control-AC-Air-Dryer
-- Cummins Generator
-- UPS-01 - Eaton 93PM 200(200), UPS-Room
-- EF-01 - Greenheck G-095-DGEX-QD, Roof
-- EF-02 - Greenheck SEV-12-20-CCW-UB, Roof
-- EF-03 - Greenheck SEB-12-15-CCW-UB, Roof
-- EF-04 - Greenheck SEB-12-20-CCW-UB, Roof
+## New manuals
+- 503 Aircon Tech Chiller
+- Bry-Air DEHU
+- House-AC-01
+- House-AC-02
+- House-AC-03
 
-## Main features
-
-- Search by asset ID, model, manufacturer, category, or location
-- Guided one-question-at-a-time troubleshooting
-- Large mobile-friendly Yes/No controls
-- Automatic scroll to the top after each selection
-- Safety warning on every diagnostic step
-- Manufacturer manual buttons
-- Direct links suitable for QR codes, such as:
-  - `?asset=UPS-01`
-  - `?asset=EF-03`
+## Troubleshooting upgrades
+- Chiller: startup, warm water, flow, high/low pressure, freeze, fan, compressor trip
+- Bry-Air: humidity, startup, rotor, heater, airflow, overheat, noise
+- House air compressors: startup, pressure, heat, oil, noise, trip, unloader
+- Hydronic pumps: startup, no flow, low/high DP, cavitation/vibration, seal leak, trip, rotation
+- Search now includes alarm and symptom names/descriptions
 
 ## Deployment
-
-Upload the complete contents of this folder to GitHub and deploy it as a static site through Cloudflare Pages or another static host.
-
-No build command is required.
+Upload the contents of the FacilityIQ_V02 folder to the root of the existing website repository, replacing the prior files. No build command is required.
