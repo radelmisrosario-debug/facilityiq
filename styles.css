@@ -44,3 +44,47 @@ h1,h2,h3,p{margin-top:0}
   .result-card{padding:16px}
   .card{min-height:0}
 }
+
+
+/* V03 troubleshooting engine */
+.card-kicker{display:block;margin-bottom:8px;font-size:.7rem;font-weight:800;letter-spacing:.11em;color:#60717f}
+.symptom-card{position:relative;padding-right:42px}
+.symptom-card:after{content:"›";position:absolute;right:18px;top:50%;transform:translateY(-50%);font-size:2rem;color:#81909c}
+.diagnostic-panel{margin-top:28px;border-top:1px solid #dce2e8;padding-top:26px}
+.diagnostic-heading h3{margin:3px 0 7px;font-size:1.35rem}
+.measurement-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin-top:18px}
+.measurement-field{display:block;padding:13px;border:1px solid #dce2e8;border-radius:12px;background:#f8fafb}
+.measurement-field>span{display:block;margin-bottom:8px;font-size:.87rem;font-weight:700;color:#3f4e5b}
+.input-unit{display:grid;grid-template-columns:1fr auto;align-items:center;border:1px solid #c7d1d9;border-radius:9px;background:#fff;overflow:hidden}
+.input-unit input{width:100%;min-width:0;border:0;padding:12px;font-size:1.05rem;outline:0;background:transparent}
+.input-unit:focus-within{border-color:#1f4f66;box-shadow:0 0 0 3px rgba(31,79,102,.12)}
+.input-unit b{padding:0 11px;color:#61717e;font-size:.84rem;white-space:nowrap}
+.diagnostic-actions{max-width:520px}
+.diagnostic-results{margin-top:20px}
+.indicator{border:1px solid #dce2e8;border-left:5px solid #607d8b;border-radius:12px;padding:14px;margin-top:10px;background:#fff}
+.indicator>div{display:flex;justify-content:space-between;gap:14px;align-items:baseline}
+.indicator span{font-size:1.12rem;font-weight:800}
+.indicator p{margin:7px 0 0;color:#52616e;line-height:1.45}
+.indicator.normal{border-left-color:#267342;background:#f4fbf6}
+.indicator.caution{border-left-color:#ad6a00;background:#fff9ed}
+.indicator.high{border-left-color:#a40000;background:#fff3f3}
+.question-card{max-width:760px;margin-left:auto;margin-right:auto}
+.step-topline{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.step-count{font-size:.82rem;color:#66737f;font-weight:700}
+.progress-track{height:8px;margin:12px 0 17px;background:#e3e9ed;border-radius:999px;overflow:hidden}
+.progress-fill{height:100%;background:#1f4f66;border-radius:inherit;transition:width .25s ease}
+.result-final{max-width:790px;margin-left:auto;margin-right:auto}
+.checks{margin-top:22px;padding-top:18px;border-top:1px solid #dce2e8}
+.check-row{display:grid;grid-template-columns:48px 1fr;gap:10px;align-items:start;padding:9px 0;border-bottom:1px solid #edf1f4}
+.check-row p{margin:0}
+.check-yes,.check-no{display:inline-block;border-radius:999px;padding:4px 7px;text-align:center;font-size:.72rem;font-weight:800}
+.check-yes{background:#e3f4e8;color:#1d6738}
+.check-no{background:#fbe5e5;color:#8b1d1d}
+.manual-wrap{margin-top:14px}
+.asset-overview{overflow:hidden}
+@media(max-width:650px){
+  .measurement-grid{grid-template-columns:1fr}
+  .diagnostic-actions{grid-template-columns:1fr}
+  .indicator>div{align-items:flex-start;flex-direction:column;gap:4px}
+  .step-topline{align-items:flex-start;flex-direction:column;gap:2px}
+}

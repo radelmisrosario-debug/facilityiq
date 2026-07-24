@@ -1,29 +1,29 @@
-# FacilityIQ V02 — Troubleshooting Focus
+# FacilityIQ V03 — Troubleshooting Engine
 
-This release preserves all V01 assets, manuals, and troubleshooting guides and adds:
+V03 preserves every asset, manual, and troubleshooting tree from V02. It remains focused solely on equipment troubleshooting.
 
-## New assets
-- 503-Aircon-Tech-Chiller — MultiAqua MAC-060HE-03 — Roof
-- Bry-Air-DEHU — MiniPAC Series — Room 503
-- House-AC-01 — Room 805
-- House-AC-02 — Room 805
-- House-AC-03 — Room 182
-- SCWP-01 and SCWP-02 — Secondary chilled-water pumps — Room 805
-- HWP-01 and HWP-02 — Hot-water loop pumps — Room 805
+## Added in V03
 
-## New manuals
-- 503 Aircon Tech Chiller
-- Bry-Air DEHU
-- House-AC-01
-- House-AC-02
-- House-AC-03
-
-## Troubleshooting upgrades
-- Chiller: startup, warm water, flow, high/low pressure, freeze, fan, compressor trip
-- Bry-Air: humidity, startup, rotor, heater, airflow, overheat, noise
-- House air compressors: startup, pressure, heat, oil, noise, trip, unloader
-- Hydronic pumps: startup, no flow, low/high DP, cavitation/vibration, seal leak, trip, rotation
-- Search now includes alarm and symptom names/descriptions
+- Measurement-based diagnostic panels tailored to chillers, pumps, AHUs, exhaust fans, boilers, UPS systems, dehumidifiers, vacuum pumps, and air compressors.
+- Automatic calculations for:
+  - Hydronic differential pressure
+  - Water and air temperature differences
+  - Motor loading as a percentage of nameplate FLA
+  - Chiller water-flow range check for the MultiAqua MAC-060HE-03
+  - Dehumidifier RH reduction and reactivation temperature rise
+  - UPS load percentage
+  - Compressor pressure-switch operating state
+  - Vacuum deviation from target
+- Guided troubleshooting progress indicator.
+- Captured Yes/No diagnostic path.
+- Final troubleshooting summary with one-tap copy for MaintainX, email, or work-order documentation.
+- Direct asset URLs remain supported using `?asset=ASSET-ID`, making the site ready for QR-code labels.
+- No technician notes, history, scheduling, inventory, or CMMS features were added.
 
 ## Deployment
-Upload the contents of the FacilityIQ_V02 folder to the root of the existing website repository, replacing the prior files. No build command is required.
+
+Extract the ZIP and upload the contents of the `FacilityIQ_V03_Troubleshooting` folder to the root of the website repository. Replace the previous files. No build command is required.
+
+## Important
+
+Calculated indicators are screening aids, not equipment operating limits. Always compare readings with the asset nameplate, approved site setpoints, manufacturer manual, and applicable safety procedures.
