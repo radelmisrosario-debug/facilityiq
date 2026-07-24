@@ -37,6 +37,26 @@ const generatorProblems = [
   {id:"no-remote-start",name:"No Automatic or Remote Start",description:"Starts locally but not from ATS or remote signal.",startStep:"G-REMOTE-001"}
 ];
 
+
+const exhaustFanProblems = [
+  {id:"will-not-start",name:"Fan Will Not Start",description:"No fan operation when the exhaust fan is commanded on.",startStep:"EF-START-001"},
+  {id:"low-airflow",name:"Low or No Exhaust Airflow",description:"Fan runs, but airflow or room exhaust performance is low.",startStep:"EF-AIR-001"},
+  {id:"vibration",name:"Excessive Vibration",description:"Fan, curb, roof, or ductwork is vibrating more than normal.",startStep:"EF-VIB-001"},
+  {id:"noise",name:"Unusual Noise",description:"Grinding, squealing, rubbing, rattling, or other abnormal noise.",startStep:"EF-NOISE-001"},
+  {id:"motor-trip",name:"Motor Overload or Breaker Trip",description:"Motor protection or the branch circuit trips during operation.",startStep:"EF-TRIP-001"},
+  {id:"water",name:"Water Intrusion or Roof Leak",description:"Water is entering near the fan, curb, duct, or roof opening.",startStep:"EF-WATER-001"}
+];
+
+const upsProblems = [
+  {id:"on-battery",name:"UPS On Battery",description:"The UPS transferred to battery operation or reports an input-source problem.",startStep:"UPS-BATT-001"},
+  {id:"bypass",name:"UPS On Bypass",description:"The load is being supplied through static or maintenance bypass.",startStep:"UPS-BYP-001"},
+  {id:"battery-alarm",name:"Battery Alarm",description:"Battery breaker, battery test, string, charger, or runtime alarm is active.",startStep:"UPS-BATALM-001"},
+  {id:"overload",name:"UPS Overload",description:"The UPS reports excessive load, overload timing, or output current.",startStep:"UPS-LOAD-001"},
+  {id:"high-temperature",name:"High Temperature or Fan Alarm",description:"Cooling, ventilation, ambient temperature, or internal fan alarm is active.",startStep:"UPS-TEMP-001"},
+  {id:"no-output",name:"No UPS Output",description:"The protected load is not receiving normal UPS output power.",startStep:"UPS-OUT-001"},
+  {id:"communication",name:"Communication or Monitoring Alarm",description:"Network card, Modbus, building monitoring, or communication is unavailable.",startStep:"UPS-COMM-001"}
+];
+
 const ahuProblems = [
   {id:"will-not-start",name:"Unit Will Not Start",description:"Supply fan does not operate when enabled.",startStep:"AHU-START-001"},
   {id:"high-space-temperature",name:"High Space Temperature",description:"Served space is warmer than required.",startStep:"AHU-TEMP-001"},
@@ -52,6 +72,14 @@ const assets = {
   "AHU-05":{id:"AHU-05",name:"Air Handling Unit 05",category:"Air Handling Unit",manufacturer:"To be confirmed",model:"To be confirmed",location:"Location to be confirmed",manual:null,problems:ahuProblems},
   "AHU-06":{id:"AHU-06",name:"Air Handling Unit 06",category:"Air Handling Unit",manufacturer:"To be confirmed",model:"To be confirmed",location:"Room 192",manual:null,problems:ahuProblems},
 
+
+  "UPS-01":{id:"UPS-01",name:"Uninterruptible Power Supply",category:"Critical Power / UPS",manufacturer:"Eaton",model:"93PM 200(200) Gen 2",location:"UPS-Room",manual:"manuals/Eaton-93PM-200-UPS.pdf",problems:upsProblems},
+
+  "EF-01":{id:"EF-01",name:"Roof Exhaust Fan 01",category:"Roof Exhaust Fan",manufacturer:"Greenheck",model:"G-095-DGEX-QD",location:"Roof",manual:"manuals/Greenheck-G-GB-Roof-Exhaust.pdf",problems:exhaustFanProblems},
+  "EF-02":{id:"EF-02",name:"Roof Exhaust Fan 02",category:"Roof Exhaust Fan",manufacturer:"Greenheck",model:"SEV-12-20-CCW-UB",location:"Roof",manual:"manuals/Greenheck-USF-Fan.pdf",problems:exhaustFanProblems},
+  "EF-03":{id:"EF-03",name:"Roof Exhaust Fan 03",category:"Roof Exhaust Fan",manufacturer:"Greenheck",model:"SEB-12-15-CCW-UB",location:"Roof",manual:"manuals/Greenheck-USF-Fan.pdf",problems:exhaustFanProblems},
+  "EF-04":{id:"EF-04",name:"Roof Exhaust Fan 04",category:"Roof Exhaust Fan",manufacturer:"Greenheck",model:"SEB-12-20-CCW-UB",location:"Roof",manual:"manuals/Greenheck-USF-Fan.pdf",problems:exhaustFanProblems},
+
   "Boiler-01":{id:"Boiler-01",name:"Hydronic Boiler 01",category:"Hydronic Boiler",manufacturer:"Lochinvar",model:"399,999–2,070,000 Btu/hr family",location:"Room 805",manual:"manuals/Boiler-01.pdf",problems:sharedBoilerProblems},
   "Boiler-02":{id:"Boiler-02",name:"Copper-Fin II Boiler 02",category:"Hydronic Boiler",manufacturer:"Lochinvar",model:"Copper-Fin II 402–2072",location:"Room 805",manual:"manuals/Boiler-02.pdf",problems:sharedBoilerProblems},
   "Boiler-03":{id:"Boiler-03",name:"Hydronic Boiler 03",category:"Hydronic Boiler",manufacturer:"Lochinvar",model:"399,999–2,070,000 Btu/hr family",location:"Room 805",manual:"manuals/Boiler-03.pdf",problems:sharedBoilerProblems},
@@ -66,6 +94,90 @@ const assets = {
 };
 
 const steps = {
+  // Eaton 93PM UPS
+  "UPS-BATT-001":{type:"question",text:"Is normal utility/input power available at the UPS input?",safety:"UPS equipment contains lethal AC and DC energy. Only qualified UPS personnel may open cabinets or perform energized checks.",yes:"UPS-BATT-002",no:"UPS-BATT-R01"},
+  "UPS-BATT-002":{type:"question",text:"Does the UPS display an input voltage, frequency, phase, or rectifier alarm?",safety:"Record all active alarms and event timestamps before clearing or resetting anything.",yes:"UPS-BATT-R02",no:"UPS-BATT-R03"},
+  "UPS-BATT-R01":{type:"result",title:"Input source is unavailable",cause:"A utility outage, upstream breaker condition, transfer event, or input-source problem is causing battery operation.",action:"Verify the upstream source and transfer equipment. Preserve battery runtime for critical loads and escalate if the outage will exceed available runtime.",safety:"Do not operate upstream electrical equipment unless authorized and qualified."},
+  "UPS-BATT-R02":{type:"result",title:"UPS input or rectifier condition",cause:"Input voltage/frequency may be outside tolerance, a phase may be missing, or the rectifier may not be accepting the source.",action:"Record the exact alarm, verify upstream source quality, and contact Eaton-qualified service if the source is normal but the alarm remains.",safety:"Do not open UPS power cabinets or bypass protective interlocks."},
+  "UPS-BATT-R03":{type:"result",title:"Review event log and transfer cause",cause:"A brief disturbance, configured transfer threshold, or transient event may have initiated battery operation.",action:"Review the event log, confirm the UPS returns to normal operation, and verify battery recharge status.",safety:"Repeated transfers require qualified electrical investigation."},
+
+  "UPS-BYP-001":{type:"question",text:"Is the UPS reporting static bypass, maintenance bypass, or both?",safety:"The load may have reduced power protection while on bypass.",yes:"UPS-BYP-002",no:"UPS-BYP-R03"},
+  "UPS-BYP-002":{type:"question",text:"Is there an active overload, inverter, output, synchronization, or temperature alarm?",safety:"Record the exact alarm before any reset or transfer attempt.",yes:"UPS-BYP-R01",no:"UPS-BYP-R02"},
+  "UPS-BYP-R01":{type:"result",title:"Protective transfer to bypass",cause:"The UPS may have transferred because of overload, inverter fault, synchronization limits, output fault, or temperature condition.",action:"Reduce noncritical load if overloaded, record all alarms, and obtain Eaton-qualified service before forcing a transfer back to normal.",safety:"Never force the UPS off bypass without confirming the inverter and source conditions."},
+  "UPS-BYP-R02":{type:"result",title:"Verify operating mode and maintenance bypass position",cause:"The UPS may have been intentionally placed in bypass for service or testing.",action:"Confirm the approved operating lineup, maintenance bypass switch position, work permits, and service status before changing mode.",safety:"Incorrect bypass switching can interrupt power to critical loads."},
+  "UPS-BYP-R03":{type:"result",title:"Confirm the displayed operating mode",cause:"The indication may be misunderstood or may originate from remote monitoring rather than the UPS display.",action:"Check the UPS mimic screen, active alarms, and event log. Compare with the local bypass switch lineup.",safety:"Use the local UPS display as the primary operating reference."},
+
+  "UPS-BATALM-001":{type:"question",text:"Is the battery breaker open or is a battery-disconnected alarm active?",safety:"Battery systems contain high fault current and hazardous DC voltage.",yes:"UPS-BATALM-R01",no:"UPS-BATALM-002"},
+  "UPS-BATALM-002":{type:"question",text:"Did the alarm occur during or immediately after a battery test?",safety:"Do not repeat battery tests when battery condition is uncertain.",yes:"UPS-BATALM-R02",no:"UPS-BATALM-R03"},
+  "UPS-BATALM-R01":{type:"result",title:"Battery connection unavailable",cause:"The battery breaker may be open, tripped, or the battery interface may not be detected.",action:"Verify the approved battery breaker lineup and check for associated battery or charger alarms. Contact qualified UPS service before closing a tripped breaker.",safety:"Do not close a battery breaker into a suspected fault."},
+  "UPS-BATALM-R02":{type:"result",title:"Battery test did not meet criteria",cause:"Battery voltage, runtime, string condition, temperature, or state of charge may be outside acceptable limits.",action:"Record the test result, allow full recharge, review battery age and inspection history, and schedule a qualified battery evaluation.",safety:"Use appropriate battery PPE and site procedures."},
+  "UPS-BATALM-R03":{type:"result",title:"Battery, charger, or monitoring evaluation required",cause:"Possible weak string, charger issue, temperature condition, sensing problem, or communication fault.",action:"Record the exact alarm and battery readings available on the display, then contact Eaton-qualified service or the battery service provider.",safety:"Do not handle battery connections unless trained and authorized."},
+
+  "UPS-LOAD-001":{type:"question",text:"Is the displayed load above the UPS rating or is one output phase heavily unbalanced?",safety:"Overload can cause transfer to bypass or loss of output.",yes:"UPS-LOAD-R01",no:"UPS-LOAD-R02"},
+  "UPS-LOAD-R01":{type:"result",title:"Reduce and rebalance load",cause:"Connected load or phase imbalance is exceeding the UPS operating limit.",action:"Identify recently added or noncritical loads, reduce load in a controlled manner, and rebalance phases through qualified electrical work.",safety:"Coordinate all load changes with affected departments."},
+  "UPS-LOAD-R02":{type:"result",title:"Verify metering and downstream faults",cause:"A transient, downstream short circuit, inrush current, or sensing issue may have generated the overload alarm.",action:"Review the event log and downstream equipment status. Contact qualified service if the alarm remains with normal measured load.",safety:"Do not repeatedly reset an overload without finding the cause."},
+
+  "UPS-TEMP-001":{type:"question",text:"Is the UPS room temperature or ventilation outside the normal range?",safety:"Do not block UPS air inlets or exhaust openings.",yes:"UPS-TEMP-R01",no:"UPS-TEMP-002"},
+  "UPS-TEMP-002":{type:"question",text:"Is a specific internal fan or module temperature alarm displayed?",safety:"Internal UPS fans and power modules must be serviced by qualified personnel.",yes:"UPS-TEMP-R02",no:"UPS-TEMP-R03"},
+  "UPS-TEMP-R01":{type:"result",title:"Correct room cooling or airflow",cause:"High ambient temperature, failed HVAC, blocked airflow, or recirculated hot air may be affecting the UPS.",action:"Restore UPS-room cooling, clear external airflow obstructions, and monitor temperature and UPS alarms.",safety:"Do not use temporary cooling that introduces water or condensation near energized equipment."},
+  "UPS-TEMP-R02":{type:"result",title:"Internal cooling service required",cause:"A fan, sensor, filter, or internal power-module cooling condition may be present.",action:"Record the exact alarm and contact Eaton-qualified service. Reduce noncritical load if directed by site procedures.",safety:"Do not open internal UPS compartments."},
+  "UPS-TEMP-R03":{type:"result",title:"Trend temperature and inspect external conditions",cause:"The alarm may be intermittent or related to load, dust accumulation, or temporary room conditions.",action:"Review the event log, room-temperature trend, load trend, and visible external ventilation openings.",safety:"Escalate repeated temperature alarms promptly."},
+
+  "UPS-OUT-001":{type:"question",text:"Is the UPS display energized and showing an operating mode?",safety:"Assume all UPS input, bypass, output, and battery circuits are energized until verified otherwise.",yes:"UPS-OUT-002",no:"UPS-OUT-R01"},
+  "UPS-OUT-002":{type:"question",text:"Is the output breaker open, tripped, or is an output fault alarm active?",safety:"Do not close a tripped breaker until the downstream fault is identified.",yes:"UPS-OUT-R02",no:"UPS-OUT-R03"},
+  "UPS-OUT-R01":{type:"result",title:"UPS control power or input unavailable",cause:"Possible complete input loss, control-power loss, open upstream devices, or internal UPS fault.",action:"Verify upstream sources and approved breaker lineup, then contact Eaton-qualified service.",safety:"Use qualified electrical personnel for all source checks."},
+  "UPS-OUT-R02":{type:"result",title:"Output protective device or downstream fault",cause:"The UPS output may be isolated because of an overload, short circuit, or protective trip.",action:"Identify the downstream fault and coordinate restoration. Do not reclose until the cause is corrected.",safety:"Critical-load restoration must follow the site's electrical switching procedure."},
+  "UPS-OUT-R03":{type:"result",title:"Check downstream distribution and operating mode",cause:"The UPS may be operating but the load path, distribution breaker, PDU, or downstream equipment may be open.",action:"Trace the approved one-line path from UPS output to the affected load and verify each device status.",safety:"Qualified electrical personnel only."},
+
+  "UPS-COMM-001":{type:"question",text:"Is communication lost only at the BAS/network, while the local UPS display is normal?",safety:"Do not reboot UPS controls solely to restore remote monitoring.",yes:"UPS-COMM-R01",no:"UPS-COMM-R02"},
+  "UPS-COMM-R01":{type:"result",title:"Network or gateway communication issue",cause:"Possible network switch, cable, IP configuration, network card, Modbus gateway, or BAS mapping issue.",action:"Verify network link indicators, gateway power, addressing, and BAS communication without disturbing UPS operation.",safety:"Coordinate network changes with IT and controls personnel."},
+  "UPS-COMM-R02":{type:"result",title:"UPS control or communication service required",cause:"Local display, internal communication, or control module may also be affected.",action:"Record local symptoms and contact Eaton-qualified service.",safety:"Do not power-cycle the UPS without an approved critical-power plan."},
+
+  // Greenheck roof exhaust fans
+  "EF-START-001":{type:"question",text:"Is the fan commanded ON and is the local disconnect in the ON position?",safety:"Roof work requires fall protection and weather awareness. Lock out and tag all energy before opening or touching the fan.",yes:"EF-START-002",no:"EF-START-R01"},
+  "EF-START-002":{type:"question",text:"Is power available at the fan disconnect or motor starter/VFD?",safety:"Electrical testing must be performed by qualified personnel.",yes:"EF-START-003",no:"EF-START-R02"},
+  "EF-START-003":{type:"question",text:"Does the motor hum, attempt to start, or trip immediately?",safety:"Do not repeatedly reset a tripping motor.",yes:"EF-START-R03",no:"EF-START-R04"},
+  "EF-START-R01":{type:"result",title:"Fan not enabled or disconnect is off",cause:"The BAS command, interlock, starter command, or roof disconnect may not be in the run state.",action:"Verify the operating schedule, exhaust enable, interlocks, starter/VFD command, and disconnect position.",safety:"Confirm the fan was not intentionally disabled for maintenance or process safety."},
+  "EF-START-R02":{type:"result",title:"No electrical supply at the fan",cause:"Possible breaker, fuse, starter, VFD, wiring, or upstream control issue.",action:"Trace the approved electrical supply and correct the open or failed device.",safety:"Use lockout/tagout and qualified electrical personnel."},
+  "EF-START-R03":{type:"result",title:"Motor or mechanical load problem",cause:"Possible single-phasing, low voltage, failed capacitor on applicable motors, seized bearing, wheel obstruction, or motor failure.",action:"Lock out the fan, confirm the wheel turns freely, inspect for rubbing or debris, and test the motor and supply.",safety:"Never reach into the fan until all energy is locked out."},
+  "EF-START-R04":{type:"result",title:"Control circuit or motor circuit is open",cause:"Possible open overload, failed contactor, broken conductor, motor winding fault, or missing run command.",action:"Verify the run signal and test the starter/VFD, overload, wiring, and motor continuity.",safety:"Qualified electrical service only."},
+
+  "EF-AIR-001":{type:"question",text:"Is the fan wheel rotating in the correct direction?",safety:"Observe rotation from a safe position. Do not remove guards while energized.",yes:"EF-AIR-002",no:"EF-AIR-R01"},
+  "EF-AIR-002":{type:"question",text:"Are belts loose, worn, broken, or slipping on this fan?",safety:"Lock out before inspecting belts, pulleys, bearings, or the wheel.",yes:"EF-AIR-R02",no:"EF-AIR-003"},
+  "EF-AIR-003":{type:"question",text:"Is the wheel, inlet, damper, duct, or discharge area obstructed or dirty?",safety:"Use appropriate PPE for roof and exhaust-stream hazards.",yes:"EF-AIR-R03",no:"EF-AIR-R04"},
+  "EF-AIR-R01":{type:"result",title:"Incorrect fan rotation",cause:"Incorrect phase sequence or motor wiring can cause reverse rotation and severely reduced airflow.",action:"Have qualified electrical personnel correct rotation, then verify motor current and airflow.",safety:"Do not change wiring while energized."},
+  "EF-AIR-R02":{type:"result",title:"Belt drive is not transmitting full speed",cause:"Loose, worn, misaligned, or broken belts reduce wheel speed.",action:"Replace belts as a matched set where applicable, align pulleys, set proper tension, and recheck after initial operation.",safety:"Lock out and tag the fan before service."},
+  "EF-AIR-R03":{type:"result",title:"Air path is restricted",cause:"Grease, dust, debris, closed damper, duct obstruction, or wheel buildup is reducing airflow.",action:"Clean the wheel and accessible air path, verify damper movement, and inspect the duct and roof discharge.",safety:"Evaluate the exhaust contaminant before cleaning."},
+  "EF-AIR-R04":{type:"result",title:"Verify speed, static pressure, and system condition",cause:"Fan speed may be low, system resistance may be high, or the fan may be operating away from its intended point.",action:"Measure motor current, fan speed, and system pressure. Verify VFD command, pulley setup, duct configuration, and process demand.",safety:"Do not exceed the fan's maximum RPM or motor nameplate current."},
+
+  "EF-VIB-001":{type:"question",text:"Is there visible wheel buildup, damage, rubbing, or a loose component?",safety:"Lock out before removing the fan cover or inspecting rotating components.",yes:"EF-VIB-R01",no:"EF-VIB-002"},
+  "EF-VIB-002":{type:"question",text:"Are the fan, motor, bearing, curb, or roof fasteners loose?",safety:"Use appropriate fall protection while working on the roof.",yes:"EF-VIB-R02",no:"EF-VIB-003"},
+  "EF-VIB-003":{type:"question",text:"Do the bearings feel rough, hot, loose, or unusually noisy?",safety:"Allow components to cool before touching.",yes:"EF-VIB-R03",no:"EF-VIB-R04"},
+  "EF-VIB-R01":{type:"result",title:"Wheel imbalance or rubbing",cause:"Buildup, physical damage, foreign material, or contact with a stationary component can create vibration.",action:"Clean and inspect the wheel, remove debris, correct rubbing, and replace or professionally balance damaged components.",safety:"Do not operate a visibly damaged wheel."},
+  "EF-VIB-R02":{type:"result",title:"Loose mounting or structural connection",cause:"Loose fasteners, curb attachment, motor base, bearing supports, or roof/duct connection can amplify vibration.",action:"Tighten and repair mounting points to the manufacturer's requirements and inspect the curb and duct supports.",safety:"Do not use the fan if the curb or structural support is compromised."},
+  "EF-VIB-R03":{type:"result",title:"Bearing condition requires service",cause:"Worn, damaged, contaminated, or improperly lubricated bearings can create vibration and heat.",action:"Replace or service bearings using the correct type and lubrication procedure. Verify shaft alignment afterward.",safety:"Lock out before bearing service."},
+  "EF-VIB-R04":{type:"result",title:"Check alignment, balance, speed, and system resonance",cause:"Pulley misalignment, shaft condition, excessive RPM, wheel imbalance, or duct/roof resonance may be present.",action:"Check sheave alignment, belt tension, shaft runout, fan RPM, motor current, wheel balance, and structural resonance.",safety:"Use qualified fan service for balance and alignment work."},
+
+  "EF-NOISE-001":{type:"question",text:"Is the noise a squeal or chirp that changes with fan speed?",safety:"Do not remove guards or covers while the fan is operating.",yes:"EF-NOISE-R01",no:"EF-NOISE-002"},
+  "EF-NOISE-002":{type:"question",text:"Is there grinding, rumbling, or bearing-area heat?",safety:"Lock out before touching bearings or the shaft.",yes:"EF-NOISE-R02",no:"EF-NOISE-003"},
+  "EF-NOISE-003":{type:"question",text:"Is there scraping, rubbing, or impact noise from the wheel or housing?",safety:"Stop the fan immediately if rotating parts are contacting the housing.",yes:"EF-NOISE-R03",no:"EF-NOISE-R04"},
+  "EF-NOISE-R01":{type:"result",title:"Belt slip or belt alignment issue",cause:"Loose, glazed, worn, or misaligned belts can squeal.",action:"Inspect belt condition, sheave alignment, and tension. Replace worn belts as a matched set.",safety:"Lock out and tag before belt service."},
+  "EF-NOISE-R02":{type:"result",title:"Bearing wear or lubrication issue",cause:"A damaged, contaminated, dry, or over-lubricated bearing may produce grinding or rumbling.",action:"Inspect bearing condition and follow the manufacturer's lubrication or replacement procedure.",safety:"Allow hot bearings to cool before service."},
+  "EF-NOISE-R03":{type:"result",title:"Wheel is contacting a stationary component",cause:"Loose hardware, shifted wheel, shaft movement, debris, or damaged housing may be causing contact.",action:"Keep the fan off, locate the contact point, remove debris, and correct alignment or damaged parts.",safety:"Do not operate until adequate wheel clearance is restored."},
+  "EF-NOISE-R04":{type:"result",title:"Inspect motor, fasteners, damper, duct, and roof components",cause:"Motor noise, loose panels, fluttering damper, duct movement, or wind effects may be present.",action:"Inspect all accessible components while locked out, then observe operation from a safe position.",safety:"Secure loose roof components before returning the fan to service."},
+
+  "EF-TRIP-001":{type:"question",text:"Does the wheel rotate freely by hand with the fan locked out?",safety:"Verify zero energy before rotating the wheel by hand.",yes:"EF-TRIP-002",no:"EF-TRIP-R01"},
+  "EF-TRIP-002":{type:"question",text:"Is measured motor current above the motor nameplate rating?",safety:"Current measurement must be performed by qualified personnel.",yes:"EF-TRIP-R02",no:"EF-TRIP-R03"},
+  "EF-TRIP-R01":{type:"result",title:"Mechanical binding or obstruction",cause:"Seized bearings, wheel rubbing, debris, or belt/drive binding may be overloading the motor.",action:"Keep the fan locked out and repair the mechanical restriction before testing the motor.",safety:"Do not repeatedly reset the overload."},
+  "EF-TRIP-R02":{type:"result",title:"Motor is overloaded",cause:"Possible excessive fan speed, high system load, low voltage, phase imbalance, incorrect overload setting, or motor deterioration.",action:"Verify voltage, phase balance, RPM, pulley setup, motor condition, and overload setting against nameplate data.",safety:"Do not reduce safety settings to keep the fan running."},
+  "EF-TRIP-R03":{type:"result",title:"Intermittent electrical or protective-device issue",cause:"A weak breaker, loose connection, overheating contactor, VFD fault, or intermittent motor problem may be present.",action:"Review fault history and inspect the circuit, terminations, starter/VFD, and motor insulation.",safety:"Qualified electrical service only."},
+
+  "EF-WATER-001":{type:"question",text:"Is water entering at the roof curb, flashing, or fan base rather than through the duct?",safety:"Do not work on a wet or icy roof without proper controls.",yes:"EF-WATER-R01",no:"EF-WATER-002"},
+  "EF-WATER-002":{type:"question",text:"Is the fan operating during rain and is the damper opening correctly?",safety:"Observe from a safe position and do not place hands in the airstream.",yes:"EF-WATER-R02",no:"EF-WATER-R03"},
+  "EF-WATER-R01":{type:"result",title:"Roof curb or flashing leak",cause:"Failed sealant, curb cap, flashing, fasteners, or roof membrane may be allowing water entry.",action:"Inspect and repair the roof/curb interface using approved roofing methods. Verify the fan base is secure and properly sealed.",safety:"Coordinate roof repairs with qualified roofing personnel."},
+  "EF-WATER-R02":{type:"result",title:"Inspect weatherhood, discharge, drainage, and wind effects",cause:"Wind-driven rain, blocked drainage, damaged hood components, or discharge configuration may permit water entry.",action:"Inspect the shroud/hood, drainage paths, fasteners, and discharge area. Correct damaged or missing weather components.",safety:"Lock out before removing covers."},
+  "EF-WATER-R03":{type:"result",title:"Check duct condensation and backdraft damper",cause:"Condensation, inactive-fan leakage, or a damper that does not close may allow moisture into the duct.",action:"Inspect the damper, duct insulation, drainage, and operating schedule. Correct the moisture source.",safety:"Evaluate the exhaust stream before accessing the duct."},
+
   // Boiler
   "B-FIRE-001":{type:"question",text:"Is there a valid call for heat and power at the boiler?",safety:"Gas-fired boiler troubleshooting must be performed by qualified personnel.",yes:"B-FIRE-002",no:"B-FIRE-R01"},
   "B-FIRE-002":{type:"question",text:"Are all safety limits and water-flow permissives satisfied?",safety:"Do not bypass high limits, low-water cutoffs, flow switches, or flame safeguards.",yes:"B-FIRE-003",no:"B-FIRE-R02"},
@@ -280,9 +392,10 @@ function renderStep(asset,problem,stepId){
   const s=steps[stepId];pageTitle.textContent=`${asset.id}: ${problem.name}`;homeButton.hidden=false;
   if(!s){app.innerHTML=`<div class="result-card"><h2>Step not found</h2></div>`;return}
   if(s.type==="question"){
-    app.innerHTML=`<div class="result-card"><span class="status">${esc(asset.id)}</span><h2>${esc(s.text)}</h2><div class="warning"><strong>Safety:</strong> ${esc(s.safety)}</div><div class="button-row"><button id="yes" class="answer-button">Yes</button><button id="no" class="answer-button">No</button></div></div>`;
+    app.innerHTML=`<div class="result-card"><span class="status">${esc(asset.id)}</span><div class="progress-label">Guided troubleshooting</div><h2>${esc(s.text)}</h2><div class="warning"><strong>Safety:</strong> ${esc(s.safety)}</div><div class="button-row"><button id="yes" class="answer-button">Yes</button><button id="no" class="answer-button">No</button></div><button id="asset-back" class="text-button">Back to ${esc(asset.id)} problems</button></div>`;
     document.getElementById("yes").onclick=()=>setRoute({asset:asset.id,problem:problem.id,step:s.yes});
     document.getElementById("no").onclick=()=>setRoute({asset:asset.id,problem:problem.id,step:s.no});
+    document.getElementById("asset-back").onclick=()=>setRoute({asset:asset.id});
   } else {
     const manual=asset.manual?`<a class="manual-button" href="${asset.manual}" target="_blank" rel="noopener">Open Manufacturer Manual</a>`:"";
     app.innerHTML=`<div class="result-card"><span class="status">RESULT</span><h2>${esc(s.title)}</h2><p><strong>Likely cause:</strong><br>${esc(s.cause)}</p><p><strong>Recommended action:</strong><br>${esc(s.action)}</p><div class="warning"><strong>Safety:</strong> ${esc(s.safety)}</div><div class="button-row"><button id="restart" class="primary-button">Restart Guide</button><button id="back" class="secondary-button">Back to Asset</button></div><div style="margin-top:14px">${manual}</div></div>`;

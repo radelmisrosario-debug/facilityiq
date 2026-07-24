@@ -1,43 +1,34 @@
-# FacilityIQ — Manual-Based Troubleshooting
+# FacilityIQ Troubleshooting v1
 
-This version includes:
+A mobile-friendly, static troubleshooting application for facility equipment.
+
+## Included assets
 
 - AHU-01, AHU-02, AHU-04, AHU-05, AHU-06
 - Boiler-01 through Boiler-04
 - CHEM-VACP-01 and CHEM-VACP-02
-- Control-AC
-- Control-AC-Air-Dryer
-- Cummins-Generator
-- Search
-- Direct QR-code asset links
-- A View Manual button for every uploaded manual
-- Troubleshooting flows based on the uploaded manufacturer manuals
+- Control-AC and Control-AC-Air-Dryer
+- Cummins Generator
+- UPS-01 - Eaton 93PM 200(200), UPS-Room
+- EF-01 - Greenheck G-095-DGEX-QD, Roof
+- EF-02 - Greenheck SEV-12-20-CCW-UB, Roof
+- EF-03 - Greenheck SEB-12-15-CCW-UB, Roof
+- EF-04 - Greenheck SEB-12-20-CCW-UB, Roof
 
-## Deploy through GitHub and Cloudflare Pages
+## Main features
 
-1. Extract this ZIP.
-2. Copy all files and the `manuals` folder into your local `facilityiq` GitHub repository.
-3. In GitHub Desktop, enter a summary such as `Add manuals and equipment guides`.
-4. Click `Commit to main`.
-5. Click `Push origin`.
-6. Cloudflare Pages should deploy automatically.
+- Search by asset ID, model, manufacturer, category, or location
+- Guided one-question-at-a-time troubleshooting
+- Large mobile-friendly Yes/No controls
+- Automatic scroll to the top after each selection
+- Safety warning on every diagnostic step
+- Manufacturer manual buttons
+- Direct links suitable for QR codes, such as:
+  - `?asset=UPS-01`
+  - `?asset=EF-03`
 
-## Important
+## Deployment
 
-The `manuals` folder must be uploaded with the website. Do not upload only the three main files.
+Upload the complete contents of this folder to GitHub and deploy it as a static site through Cloudflare Pages or another static host.
 
-## Direct links for QR codes
-
-Examples:
-
-- `https://YOUR-SITE.pages.dev/?asset=Boiler-01`
-- `https://YOUR-SITE.pages.dev/?asset=CHEM-VACP-01`
-- `https://YOUR-SITE.pages.dev/?asset=Control-AC`
-- `https://YOUR-SITE.pages.dev/?asset=Control-AC-Air-Dryer`
-- `https://YOUR-SITE.pages.dev/?asset=Cummins-Generator`
-
-## Remaining data to confirm
-
-- Exact nameplate model and serial number for each asset
-- AHU-05 location
-- AHU manuals
+No build command is required.

@@ -24,3 +24,23 @@ h1,h2,h3,p{margin-top:0}
 .section-title{margin-top:26px;margin-bottom:8px}
 .small-note{font-size:.9rem;color:#66737f}
 @media(max-width:560px){.app-shell{padding:14px}.button-row{grid-template-columns:1fr}.card-grid{grid-template-columns:1fr}}
+
+
+/* Troubleshooting-first usability enhancements */
+.app-header{position:sticky;top:0;z-index:10;background:#fff;padding-top:8px}
+.card{min-height:132px;transition:transform .12s ease,border-color .12s ease,box-shadow .12s ease}
+.card:hover,.card:focus-visible{box-shadow:0 8px 22px rgba(20,32,44,.11);outline:none}
+.answer-button{min-height:58px;font-size:1.08rem}
+.progress-label{margin:-2px 0 12px;color:#66737f;font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+.text-button{display:block;width:100%;margin-top:16px;padding:12px;border:0;background:transparent;color:#1f4f66;font-weight:700;cursor:pointer}
+.text-button:hover,.text-button:focus{text-decoration:underline}
+.manual-button{margin-top:4px}
+.result-card h2{line-height:1.28}
+.result-card p{line-height:1.55}
+@media(max-width:560px){
+  .app-header h1{font-size:1.35rem}
+  .app-header{align-items:flex-start}
+  .secondary-button{padding:10px 12px}
+  .result-card{padding:16px}
+  .card{min-height:0}
+}
