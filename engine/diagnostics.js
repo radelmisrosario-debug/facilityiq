@@ -94,6 +94,18 @@ const diagnosticProfiles = {
       {id:"roomTemp",label:"UPS room temperature",unit:"°F",type:"number",step:"0.1"}
     ]
   },
+
+  dryer: {
+    title:"Compressed-Air Dryer Diagnostic Measurements",
+    fields:[
+      {id:"inletPressure",label:"Dryer inlet pressure",unit:"PSI",type:"number",step:"0.1"},
+      {id:"outletPressure",label:"Dryer outlet pressure",unit:"PSI",type:"number",step:"0.1"},
+      {id:"dewPoint",label:"Pressure dew point",unit:"°F",type:"number",step:"0.1"},
+      {id:"roomTemp",label:"Mechanical-room temperature",unit:"°F",type:"number",step:"0.1"},
+      {id:"motorAmps",label:"Refrigeration compressor current",unit:"A",type:"number",step:"0.1"},
+      {id:"motorFla",label:"Compressor nameplate FLA",unit:"A",type:"number",step:"0.1"}
+    ]
+  },
   vacuum: {
     title:"Vacuum Pump Diagnostic Measurements",
     fields:[
@@ -111,6 +123,7 @@ function profileForAsset(asset){
   if(c.includes("chiller")) return "chiller";
   if(c.includes("dehumid")) return "dehumidifier";
   if(c.includes("secondary chilled water pump")||c.includes("hot water loop pump")) return "hydronic";
+  if(c.includes("air dryer")||c.includes("dryer")) return "dryer";
   if(c.includes("air compressor")||c.includes("compressor")) return "airCompressor";
   if(c.includes("air handling")||asset.id.startsWith("AHU")) return "ahu";
   if(c.includes("exhaust fan")||asset.id.startsWith("EF-")) return "fan";

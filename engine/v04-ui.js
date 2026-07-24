@@ -101,3 +101,139 @@ function bindDiagnosticPanel(asset){
     document.getElementById("diagnostic-output").innerHTML="";
   };
 }
+
+
+/* ===== FacilityIQ V05 tri-state and evidence-quality UI overrides ===== */
+
+function fiqObservationMarkup(profile){
+  return (facilityIqObservations[profile] || []).map(([key,label])=>`
+    <div class="evidence-option evidence-tristate" data-evidence-row="${esc(key)}">
+      <span>${esc(label)}</span>
+      <div class="tri-buttons" role="group" aria-label="${esc(label)}">
+        <button type="button" data-evidence="${esc(key)}" data-state="yes">Yes</button>
+        <button type="button" data-evidence="${esc(key)}" data-state="no">No</button>
+        <button type="button" data-evidence="${esc(key)}" data-state="unknown" class="active">Unknown</button>
+      </div>
+    </div>`).join("");
+}
+
+function fiqCollectObservations(){
+  const result={};
+  document.querySelectorAll("[data-evidence-row]").forEach(row=>{
+    const key=row.dataset.evidenceRow;
+    result[key]=row.querySelector("[data-evidence].active")?.dataset.state||"unknown";
+  });
+  return result;
+}
+
+function fiqBindTriState(){
+  document.querySelectorAll(".tri-buttons").forEach(group=>{
+    group.querySelectorAll("button").forEach(button=>{
+      button.onclick=()=>{
+        group.querySelectorAll("button").forEach(b=>b.classList.remove("active"));
+        button.classList.add("active");
+      };
+    });
+  });
+}
+
+function fiqFriendlyField(profile,key){
+  const profileFields=diagnosticProfiles?.[profile]?.fields||[];
+  const found=profileFields.find(f=>f.id===key);
+  const extras={airflow:"Measured airflow",flow:"Water flow",ratedKw:"UPS rated capacity"};
+  return found?.label||extras[key]||key;
+}
+
+function fiqQualityMarkup(profile,quality,contradictions){
+  const level=quality.completeness>=65?"strong":quality.completeness>=35?"moderate":"limited";
+  return `<section class="quality-panel ${level}">
+    <div class="quality-head"><div><span class="status">EVIDENCE QUALITY</span><h3>${level[0].toUpperCase()+level.slice(1)} diagnostic evidence</h3></div><b>${quality.completeness}% complete</b></div>
+    <div class="quality-track"><div style="width:${quality.completeness}%"></div></div>
+    ${quality.missing.length?`<div class="next-tests"><strong>Recommended next measurements</strong><ol>${quality.missing.map(k=>`<li>${esc(fiqFriendlyField(profile,k))}</li>`).join("")}</ol></div>`:`<p class="quality-ok">All required measurements for this model were entered.</p>`}
+    ${contradictions.length?`<div class="contradictions"><strong>Conflicting evidence detected</strong>${contradictions.map(x=>`<p>${esc(x)}</p>`).join("")}</div>`:""}
+  </section>`;
+}
+
+function fiqRangeMarkup(results){
+  if(!results.length)return "";
+  return `<section class="range-results"><h3>Asset-specific operating comparison</h3>${results.map(r=>`
+    <div class="range-row ${r.state}">
+      <div><strong>${esc(r.label)}</strong><span>${esc(r.expected)}</span><small>${esc(r.source)}</small></div>
+      <b>${esc(r.value)}</b>
+    </div>`).join("")}</section>`;
+}
+
+function fiqRenderRankings(rankings){
+  if(!rankings.length)return `<div class="warning"><strong>No weighted model is available for this symptom yet.</strong> Continue with the guided troubleshooting tree.</div>`;
+  return `<div class="ranked-diagnoses">
+    <div class="ranking-disclaimer">Relative diagnostic ranking based on entered evidence. Scores are not statistically validated probabilities.</div>
+    ${rankings.map((item,index)=>`
+      <article class="ranked-cause">
+        <div class="rank-head">
+          <span class="rank-number">${index+1}</span>
+          <div class="rank-title"><strong>${esc(item.title)}</strong><span>${item.evidenceCount} supporting · ${item.contradictionCount||0} contradicting evidence item${(item.evidenceCount+(item.contradictionCount||0))===1?"":"s"}</span></div>
+          <b>${item.relative}%</b>
+        </div>
+        <div class="score-track"><div style="width:${item.relative}%"></div></div>
+        <p><strong>Recommended action:</strong> ${esc(item.action)}</p>
+        <p class="reference"><strong>Reference:</strong> ${esc(item.reference)}</p>
+      </article>`).join("")}
+  </div>`;
+}
+
+function renderDiagnosticPanel(asset){
+  const profileName=profileForAsset(asset);
+  if(!profileName)return "";
+  const profile=diagnosticProfiles[profileName],saved=loadMeasurements(asset.id);
+  const problemOptions=fiqProblemOptions(asset,profileName);
+  const airflowField=profileName==="ahu"?`<label class="measurement-field"><span>Measured airflow</span><div class="input-unit"><input inputmode="decimal" type="number" step="1" data-measure="airflow" value="${saved.airflow??""}" placeholder="—"><b>CFM</b></div></label>`:"";
+  const flowField=profileName==="boiler"?`<label class="measurement-field"><span>Hot-water flow</span><div class="input-unit"><input inputmode="decimal" type="number" step="0.1" data-measure="flow" value="${saved.flow??""}" placeholder="—"><b>GPM</b></div></label>`:"";
+
+  return `<section class="diagnostic-panel v04-panel">
+    <div class="diagnostic-heading"><div><span class="status">V05 EVIDENCE ENGINE</span><h3>Diagnostic Coverage and Evidence Quality</h3>
+    <p class="meta">Choose a supported symptom, enter measured values, and classify each field observation as Yes, No, or Unknown.</p></div></div>
+    ${problemOptions?`<label class="diagnosis-select"><span>Symptom to analyze</span><select id="weighted-problem">${problemOptions}</select></label>`:`<div class="warning">A weighted model has not yet been configured for this asset profile. Engineering calculations remain available.</div>`}
+    <div class="measurement-grid">${profile.fields.map(f=>`<label class="measurement-field"><span>${esc(f.label)}</span><div class="input-unit"><input inputmode="decimal" type="${f.type}" step="${f.step}" data-measure="${f.id}" value="${saved[f.id]??""}" placeholder="—"><b>${esc(f.unit)}</b></div></label>`).join("")}${airflowField}${flowField}</div>
+    ${problemOptions?`<details class="evidence-box"><summary>Field observations — Yes / No / Unknown</summary><div class="evidence-grid">${fiqObservationMarkup(profileName)}</div></details>`:""}
+    <div class="button-row diagnostic-actions"><button id="analyze-readings" class="primary-button">Run Diagnostic Analysis</button><button id="clear-readings" class="secondary-button">Clear</button></div>
+    <div id="diagnostic-output"></div>
+  </section>`;
+}
+
+function bindDiagnosticPanel(asset){
+  const analyze=document.getElementById("analyze-readings");
+  if(!analyze)return;
+  const profile=profileForAsset(asset);
+  fiqBindTriState();
+  const collect=()=>Object.fromEntries([...document.querySelectorAll("[data-measure]")].map(x=>[x.dataset.measure,x.value]));
+
+  analyze.onclick=()=>{
+    const values=collect(),observations=fiqCollectObservations();
+    saveMeasurements(asset.id,values);
+    const problemId=document.getElementById("weighted-problem")?.value;
+    const indicators=diagnosticResults(profile,values);
+    const calculations=fiqEngineeringCalculations(profile,values);
+    const rankings=problemId?fiqRankFailuresV05(profile,problemId,values,observations):[];
+    const quality=problemId?fiqEvidenceQuality(profile,problemId,values,observations):{missing:[],completeness:0};
+    const contradictions=fiqDetectContradictions(profile,values,observations);
+    const rangeResults=fiqAssetRangeResults(asset,profile,values);
+    const target=document.getElementById("diagnostic-output");
+
+    const qualityHtml=problemId?fiqQualityMarkup(profile,quality,contradictions):"";
+    const rangeHtml=fiqRangeMarkup(rangeResults);
+    const indicatorHtml=indicators.length?`<div class="diagnostic-results"><h3>Calculated diagnostic indicators</h3>${indicators.map(x=>`<div class="indicator ${x.state}"><div><strong>${esc(x.label)}</strong><span>${esc(x.value)}</span></div><p>${esc(x.note)}</p></div>`).join("")}</div>`:"";
+    const rankingHtml=problemId?`<div class="diagnostic-results"><h3>Ranked likely causes</h3>${fiqRenderRankings(rankings)}</div>`:"";
+
+    target.innerHTML=`${qualityHtml}${rangeHtml}${fiqRenderEngineering(calculations)}${indicatorHtml}${rankingHtml}`||`<div class="warning"><strong>No result:</strong> Enter measurements or classify field evidence.</div>`;
+    target.scrollIntoView({behavior:"smooth",block:"nearest"});
+  };
+
+  document.getElementById("clear-readings").onclick=()=>{
+    document.querySelectorAll("[data-measure]").forEach(x=>x.value="");
+    document.querySelectorAll(".tri-buttons").forEach(group=>{
+      group.querySelectorAll("button").forEach(b=>b.classList.toggle("active",b.dataset.state==="unknown"));
+    });
+    saveMeasurements(asset.id,{});
+    document.getElementById("diagnostic-output").innerHTML="";
+  };
+}

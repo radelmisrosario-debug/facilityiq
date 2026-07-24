@@ -1,34 +1,22 @@
-# FacilityIQ V04 — Core Diagnostic Engine
+# FacilityIQ V05 — Diagnostic Coverage and Evidence Quality
 
-V04 begins the transition from a single-file troubleshooting website to a modular, data-driven diagnostic platform.
+V05 expands the modular diagnostic engine while keeping FacilityIQ focused solely on troubleshooting.
 
-## Core architecture
+## Added
 
-- `data/catalog.js` — existing assets, symptoms, and guided troubleshooting steps
-- `data/knowledge-base.js` — reusable weighted failure definitions and field observations
-- `engine/diagnostics.js` — measurement profiles, session tracking, and diagnostic indicators
-- `engine/rule-engine.js` — universal evidence scoring and engineering calculations
-- `engine/v04-ui.js` — weighted-diagnosis interface
-- `ui/app.js` — routing, search, asset pages, and guided troubleshooting UI
-- `manuals/` — existing manufacturer manuals
+- Weighted diagnostic models for boilers, UPS systems, vacuum pumps, exhaust fans, and compressed-air dryers
+- Existing weighted models retained for chillers, pumps, AHUs, air compressors, and dehumidifiers
+- Three-state field evidence: Yes, No, or Unknown
+- Evidence-completeness score
+- Recommended next measurements
+- Contradiction detection for conflicting measurements and observations
+- Asset-specific operating comparisons for configured equipment
+- Existing guided trees, manuals, search, engineering calculations, and copyable troubleshooting summaries remain intact
 
-## New V04 capabilities
+## Important
 
-- Weighted failure ranking for selected chiller, hydronic-pump, AHU, air-compressor, and dehumidifier symptoms
-- Confirmed field-observation inputs
-- Engineering calculations:
-  - Chilled-water ΔT, BTU/hr, and tons
-  - Pump differential pressure and feet of head
-  - AHU air-temperature split and sensible BTU/hr when CFM is entered
-  - Boiler ΔT and heat transfer when GPM is entered
-  - Motor loading as a percentage of nameplate FLA
-  - UPS load percentage
-- Existing V03 guided troubleshooting trees, manuals, search, direct asset links, and work-order summaries remain intact
-
-## Important limitation
-
-The displayed ranking percentages are relative evidence scores. They are not statistically validated probabilities. Manufacturer operating limits, site procedures, calibrated measurements, and qualified judgment remain controlling.
+Diagnostic rankings are relative evidence scores, not statistically validated failure probabilities. Asset-specific limits must be confirmed against approved site data, nameplates, manuals, commissioning records, and calibrated instruments.
 
 ## Deployment
 
-Upload the contents of the `FacilityIQ_V04_Core` folder to the root of the GitHub repository or Cloudflare Pages project. No build command is required.
+Upload the contents of `FacilityIQ_V05_Evidence_Quality` to the website repository root. No build command is required.

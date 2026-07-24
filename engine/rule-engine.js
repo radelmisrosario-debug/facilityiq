@@ -127,3 +127,150 @@ function fiqEngineeringCalculations(profile, values){
 
   return results;
 }
+
+
+/* ===== FacilityIQ V05 evidence-quality engine ===== */
+
+function fiqObservationState(observations,key){
+  return observations?.[key] || "unknown";
+}
+
+function fiqRuleMatchesV05(rule, measurements, observations){
+  if(rule.kind === "observation"){
+    const state = fiqObservationState(observations,rule.key);
+    if(state === "unknown") return false;
+    const actual = state === "yes";
+    return rule.value === undefined ? actual : actual === rule.value;
+  }
+  return fiqRuleMatches(rule, measurements, observations);
+}
+
+function fiqEvidenceQuality(profile, problemId, measurements, observations){
+  const failures = facilityIqKnowledgeBase?.[profile]?.[problemId] || [];
+  const required = [...new Set(failures.flatMap(f=>f.required||[]))];
+  const missing = required.filter(key=>fiqNumber(measurements[key])===null);
+
+  const observationRules = [...new Set(
+    failures.flatMap(f=>f.evidence||[])
+      .filter(r=>r.kind==="observation")
+      .map(r=>r.key)
+  )];
+  const knownObservations = observationRules.filter(key=>fiqObservationState(observations,key)!=="unknown").length;
+
+  const measurementRules = [...new Set(
+    failures.flatMap(f=>f.evidence||[])
+      .filter(r=>r.kind==="measurement")
+      .map(r=>r.key)
+  )];
+  const knownMeasurements = measurementRules.filter(key=>fiqNumber(measurements[key])!==null).length;
+
+  const available = observationRules.length + measurementRules.length;
+  const known = knownObservations + knownMeasurements;
+  const completeness = available ? Math.round(known/available*100) : 0;
+
+  return {required,missing,completeness,known,available};
+}
+
+function fiqRankFailuresV05(profile, problemId, measurements, observations){
+  const failures = facilityIqKnowledgeBase?.[profile]?.[problemId] || [];
+  const ranked = failures.map(failure=>{
+    let score=failure.base||0;
+    let possible=failure.base||0;
+    const matched=[];
+    const contradicted=[];
+
+    for(const rule of failure.evidence||[]){
+      possible += rule.weight||0;
+      if(fiqRuleMatchesV05(rule,measurements,observations)){
+        score += rule.weight||0;
+        matched.push(rule);
+      } else if(rule.kind==="observation"){
+        const state=fiqObservationState(observations,rule.key);
+        if(state!=="unknown"){
+          const expected=rule.value===undefined?true:rule.value;
+          const actual=state==="yes";
+          if(actual!==expected) contradicted.push(rule);
+        }
+      }
+    }
+
+    return {
+      ...failure,
+      rawScore:score,
+      evidenceCount:matched.length,
+      contradictionCount:contradicted.length,
+      confidence:possible?Math.min(99,Math.round(score/possible*100)):0
+    };
+  });
+
+  ranked.sort((a,b)=>b.rawScore-a.rawScore);
+  const max=ranked[0]?.rawScore||1;
+  return ranked.map(item=>({...item,relative:Math.max(1,Math.round(item.rawScore/max*100))}));
+}
+
+function fiqDetectContradictions(profile, measurements, observations){
+  const issues=[];
+  const n=fiqNumber;
+  const yes=key=>fiqObservationState(observations,key)==="yes";
+  const no=key=>fiqObservationState(observations,key)==="no";
+
+  if(yes("fansRunning") && yes("fansNotRunning"))
+    issues.push("Condenser fans are marked both running and not running.");
+  if(yes("coilDirty") && yes("coilClean"))
+    issues.push("The condenser/coil is marked both dirty and confirmed clean.");
+  if(yes("manualBypassSelected") && yes("inverterAlarm")===false && no("manualBypassSelected")===false){
+    // no-op placeholder; direct contradictions are handled by tri-state.
+  }
+
+  const amps=n(measurements.motorAmps), speed=n(measurements.speed);
+  if(speed!==null && speed>=20 && amps!==null && amps===0)
+    issues.push("Speed indicates the motor is commanded to run, but measured current is 0 A.");
+  if(yes("pumpNotRunning") && speed!==null && speed>=20)
+    issues.push("The pump is marked not running, but VFD speed is entered above 20 Hz.");
+  if(yes("blowerNotRunning") && n(measurements.flameSignal)>0)
+    issues.push("A flame signal is entered while the combustion blower is marked not running.");
+  if(profile==="ups" && n(measurements.outputVoltage)>100 && yes("outputBreakerOpen"))
+    issues.push("Output voltage is present while the UPS output breaker is marked open.");
+  if(profile==="vacuum" && n(measurements.vacuum)>=n(measurements.targetVacuum) && yes("isolatedPumpStillLow"))
+    issues.push("Measured vacuum meets target while isolated-pump performance is marked low.");
+  if(profile==="dehumidifier" && n(measurements.leavingRh)<n(measurements.enteringRh) && yes("heaterNotOn") && yes("rotorStopped"))
+    issues.push("RH reduction is recorded while both reactivation heat and rotor operation are marked unavailable; verify readings and operating state.");
+
+  return issues;
+}
+
+function fiqAssetRangeResults(asset,profile,values){
+  const config=facilityIqAssetRanges?.[asset.id];
+  if(!config)return [];
+  const results=[];
+  const n=fiqNumber;
+
+  if(config.flow && n(values.flow)!==null){
+    const value=n(values.flow);
+    const state=value<config.flow.min?"low":value>config.flow.max?"high":"normal";
+    results.push({label:config.flow.label,value:`${value} ${config.flow.unit}`,state,
+      expected:`Expected ${config.flow.min}–${config.flow.max} ${config.flow.unit}`,source:config.flow.source});
+  }
+
+  if(config.ratedKw && n(values.ratedKw)!==null){
+    const value=n(values.ratedKw);
+    results.push({label:config.ratedKw.label,value:`${value} ${config.ratedKw.unit}`,
+      state:Math.abs(value-config.ratedKw.target)>1?"caution":"normal",
+      expected:`Configured value ${config.ratedKw.target} ${config.ratedKw.unit}`,source:config.ratedKw.source});
+  }
+
+  if(config.loadPct && n(values.loadKw)!==null && n(values.ratedKw)>0){
+    const pct=n(values.loadKw)/n(values.ratedKw)*100;
+    results.push({label:"UPS load",value:`${pct.toFixed(1)}%`,state:pct>100?"high":pct>config.loadPct.max?"caution":"normal",
+      expected:`Screening target ≤ ${config.loadPct.max}%`,source:config.loadPct.source});
+  }
+
+  if(config.dp && n(values.suctionPressure)!==null && n(values.dischargePressure)!==null){
+    const dp=n(values.dischargePressure)-n(values.suctionPressure);
+    const low=config.dp.target-config.dp.tolerance, high=config.dp.target+config.dp.tolerance;
+    results.push({label:config.dp.label,value:`${dp.toFixed(1)} ${config.dp.unit}`,state:dp<low?"low":dp>high?"high":"normal",
+      expected:`Configured target ${config.dp.target} ± ${config.dp.tolerance} ${config.dp.unit}`,source:config.dp.source});
+  }
+
+  return results;
+}

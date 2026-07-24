@@ -125,3 +125,33 @@ h1,h2,h3,p{margin-top:0}
   .engineering-row{align-items:flex-start;flex-direction:column;gap:5px}
   .engineering-row>b{text-align:left}
 }
+
+
+/* FacilityIQ V05 */
+.evidence-tristate{display:grid;grid-template-columns:1fr;gap:9px}
+.tri-buttons{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.tri-buttons button{border:1px solid #cbd5dc;border-radius:7px;padding:7px 5px;background:#fff;color:#4c5c68;font-size:.75rem;font-weight:800;cursor:pointer}
+.tri-buttons button[data-state="yes"].active{background:#e3f4e8;border-color:#68a87b;color:#1d6738}
+.tri-buttons button[data-state="no"].active{background:#fbe5e5;border-color:#c98181;color:#8b1d1d}
+.tri-buttons button[data-state="unknown"].active{background:#e8eef2;border-color:#8a9aa6;color:#465764}
+.quality-panel{margin-top:22px;padding:17px;border:1px solid #ccd7de;border-left:6px solid #a66a00;border-radius:13px;background:#fff}
+.quality-panel.strong{border-left-color:#267342}.quality-panel.moderate{border-left-color:#ad6a00}.quality-panel.limited{border-left-color:#9d3131}
+.quality-head{display:flex;justify-content:space-between;gap:16px;align-items:center}
+.quality-head h3{margin:3px 0 0}.quality-head>b{font-size:1.15rem}
+.quality-track{height:8px;margin:13px 0;background:#e5ebef;border-radius:99px;overflow:hidden}
+.quality-track>div{height:100%;background:#1f4f66;border-radius:inherit}
+.next-tests{padding:12px;border-radius:9px;background:#f5f8fa}
+.next-tests ol{margin:8px 0 0;padding-left:22px}
+.quality-ok{margin:8px 0 0;color:#27673d;font-weight:700}
+.contradictions{margin-top:12px;padding:12px;border:1px solid #e0a0a0;border-radius:9px;background:#fff2f2;color:#7a1e1e}
+.contradictions p{margin:7px 0 0}
+.range-results{margin-top:22px;padding:17px;border:1px solid #ccd7de;border-radius:13px;background:#fff}
+.range-results h3{margin:0 0 10px}
+.range-row{display:flex;justify-content:space-between;gap:18px;padding:12px 0;border-top:1px solid #edf1f3}
+.range-row:first-of-type{border-top:0}
+.range-row>div{display:flex;flex-direction:column;gap:3px}.range-row span,.range-row small{color:#65747f}
+.range-row>b{font-size:1.05rem;text-align:right}.range-row.low>b,.range-row.high>b{color:#9b2222}.range-row.caution>b{color:#9a6200}.range-row.normal>b{color:#267342}
+@media(max-width:650px){
+  .quality-head,.range-row{align-items:flex-start;flex-direction:column}
+  .range-row>b{text-align:left}
+}
