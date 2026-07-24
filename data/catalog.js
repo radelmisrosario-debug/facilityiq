@@ -125,6 +125,10 @@ const assets = {
 
 
   "503-Aircon-Tech-Chiller":{id:"503-Aircon-Tech-Chiller",name:"503 Aircon Tech Chiller",category:"Air-Cooled Chiller",manufacturer:"MultiAqua",model:"MAC-060HE-03",location:"Roof",manual:"manuals/503-Aircon-Tech-Chiller.pdf",problems:chillerProblems},
+  "TRANE-CH-01":{id:"TRANE-CH-01",name:"Trane Primary Site Chiller",category:"Primary Air-Cooled Chiller",manufacturer:"Trane",model:"RTAF310EUAKHXUA1N11X2NHNCCV2XAPBDXXAA1XXXX0",location:"Central Chilled-Water Plant",manual:"manuals/Trane-RTAF-Chiller.pdf",problems:chillerProblems},
+  "YORK-CH-01":{id:"YORK-CH-01",name:"York Primary Site Chiller",category:"Primary Air-Cooled Chiller",manufacturer:"York",model:"YVAA0443GMV46BA",location:"Central Chilled-Water Plant",manual:"manuals/York-YVAA-Chiller.pdf",problems:chillerProblems},
+  "TRANE-PCWP":{id:"TRANE-PCWP",name:"Trane Primary Chilled-Water Pump",category:"Dedicated Primary Chilled-Water Pump",manufacturer:"Marathon",model:"2T5TTDBA4026AN",location:"Central Chilled-Water Plant",manual:null,problems:pumpProblems},
+  "YORK-PCWP":{id:"YORK-PCWP",name:"York Primary Chilled-Water Pump",category:"Dedicated Primary Chilled-Water Pump",manufacturer:"Marathon",model:"2T5TTDBA4026AN",location:"Central Chilled-Water Plant",manual:null,problems:pumpProblems},
   "Bry-Air-DEHU":{id:"Bry-Air-DEHU",name:"Bry-Air Desiccant Dehumidifier",category:"Desiccant Dehumidifier",manufacturer:"Bry-Air",model:"MiniPAC Series",location:"Room 503",manual:"manuals/Bry-Air-DEHU.pdf",problems:dehuProblems},
 
   "House-AC-01":{id:"House-AC-01",name:"House Air Compressor 01",category:"Reciprocating Air Compressor",manufacturer:"Champion",model:"R-Series Electric Drive",location:"Room 805",manual:"manuals/House-AC-01.pdf",problems:recipCompressorProblems},

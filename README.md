@@ -1,22 +1,23 @@
-# FacilityIQ V05 — Diagnostic Coverage and Evidence Quality
+# FacilityIQ V06 - Plant Model
 
-V05 expands the modular diagnostic engine while keeping FacilityIQ focused solely on troubleshooting.
+V06 adds an interactive plant model built around the site's actual hydronic relationships.
+
+## Site-specific chilled-water structure
+
+- Trane RTAF310 primary site chiller
+- York YVAA0443 primary site chiller
+- Dedicated Marathon 2T5TTDBA4026AN PCWP for each chiller
+- SCWP-01 and SCWP-02 supply the building AHUs and are controlled by chilled-water differential pressure
+- HWP-01 and HWP-02 are controlled by hot-water differential pressure
+- 503 chiller is a separate dedicated cooling relationship for the Bry-Air dehumidifier
 
 ## Added
 
-- Weighted diagnostic models for boilers, UPS systems, vacuum pumps, exhaust fans, and compressed-air dryers
-- Existing weighted models retained for chillers, pumps, AHUs, air compressors, and dehumidifiers
-- Three-state field evidence: Yes, No, or Unknown
-- Evidence-completeness score
-- Recommended next measurements
-- Contradiction detection for conflicting measurements and observations
-- Asset-specific operating comparisons for configured equipment
-- Existing guided trees, manuals, search, engineering calculations, and copyable troubleshooting summaries remain intact
+- Interactive chilled-water, hot-water, and 503/Bry-Air diagrams
+- Clickable equipment nodes
+- Upstream/downstream system relationships
+- System-level troubleshooting checks
+- Trane and York manuals embedded
+- Site-specific chiller and PCWP asset records
 
-## Important
-
-Diagnostic rankings are relative evidence scores, not statistically validated failure probabilities. Asset-specific limits must be confirmed against approved site data, nameplates, manuals, commissioning records, and calibrated instruments.
-
-## Deployment
-
-Upload the contents of `FacilityIQ_V05_Evidence_Quality` to the website repository root. No build command is required.
+Diagnostic content supports qualified personnel and does not replace site procedures, LOTO, permits, calibrated measurements, or manufacturer instructions.
