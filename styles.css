@@ -167,3 +167,37 @@ h1,h2,h3,p{margin-top:0}
 .system-diagnostics{margin:20px 0}.system-diagnostics details{margin:10px 0;border:1px solid #ccd7de;border-radius:10px;background:#fff;padding:13px}.system-diagnostics summary{cursor:pointer;font-weight:800}.system-diagnostics li{margin:8px 0}
 .system-summary ul{padding-left:22px}.related-systems{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:14px}.related-systems strong{margin-right:4px}
 @media(max-width:700px){.system-map{height:880px}.system-node{width:138px;min-height:58px;font-size:.78rem}.system-node span{font-size:.62rem}}
+
+/* FacilityIQ V07 troubleshooting assistant */
+.chat-launcher{position:fixed;right:22px;bottom:22px;z-index:40;display:flex;align-items:center;gap:9px;border:0;border-radius:999px;padding:10px 17px 10px 10px;background:#173f52;color:#fff;box-shadow:0 12px 30px rgba(20,45,58,.28);font-weight:800;cursor:pointer}
+.chat-launcher-icon{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#85d3b1;color:#123629;font-size:1.08rem}
+.chat-panel{position:fixed;right:22px;bottom:86px;z-index:39;width:min(430px,calc(100vw - 28px));height:min(690px,calc(100vh - 112px));border:1px solid #b9c8d0;border-radius:20px;background:#f4f7f8;box-shadow:0 20px 60px rgba(22,43,54,.28);overflow:hidden}
+.chat-panel[hidden]{display:none}
+.chat-header{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:17px 18px;background:#173f52;color:#fff}
+.chat-header span{display:block;margin-bottom:3px;color:#91d9ba;font-size:.65rem;font-weight:900;letter-spacing:.12em}
+.chat-header h2{margin:0;font-size:1.06rem}
+.chat-header-actions{display:flex;gap:6px}
+.chat-header-actions button{border:1px solid rgba(255,255,255,.24);border-radius:8px;padding:7px 9px;background:transparent;color:#fff;font-weight:700;cursor:pointer}
+#chat-close{font-size:1.25rem;line-height:1}
+.chat-log{height:calc(100% - 177px);padding:17px;overflow-y:auto;overscroll-behavior:contain}
+.chat-message{display:flex;flex-direction:column;align-items:flex-start;margin-bottom:16px}
+.chat-message.user{align-items:flex-end}
+.chat-message>span{margin:0 3px 5px;color:#60727c;font-size:.68rem;font-weight:900;letter-spacing:.06em;text-transform:uppercase}
+.chat-bubble{max-width:91%;border:1px solid #d2dde2;border-radius:4px 15px 15px 15px;padding:11px 13px;background:#fff;box-shadow:0 3px 10px rgba(32,52,62,.06)}
+.chat-message.user .chat-bubble{border-color:#173f52;border-radius:15px 4px 15px 15px;background:#173f52;color:#fff}
+.chat-bubble p{margin:0 0 8px;line-height:1.45;white-space:pre-wrap}.chat-bubble p:last-child{margin-bottom:0}
+.chat-safety{margin-top:10px;border-left:3px solid #b87616;padding:8px 9px;background:#fff7e9;color:#5f421c;font-size:.78rem;line-height:1.4}
+.chat-actions,.chat-examples{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
+.chat-actions button,.chat-examples button{border:1px solid #9aadb7;border-radius:999px;padding:8px 11px;background:#fff;color:#173f52;font-size:.78rem;font-weight:800;cursor:pointer;text-align:left}
+.chat-actions button:hover,.chat-examples button:hover{border-color:#173f52;background:#eaf2f5}
+.chat-form{position:absolute;inset:auto 0 0;padding:11px 13px 12px;border-top:1px solid #d2dce1;background:#fff}
+.chat-form label{display:block;margin-bottom:6px;font-size:.72rem;font-weight:800;color:#445762}
+.chat-form>div{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end}
+.chat-form textarea{width:100%;min-height:46px;max-height:90px;resize:none;border:1px solid #bfcbd2;border-radius:10px;padding:10px;font:inherit;outline:0}
+.chat-form textarea:focus{border-color:#1f4f66;box-shadow:0 0 0 3px rgba(31,79,102,.12)}
+.chat-form button{min-height:46px;border:0;border-radius:10px;padding:0 14px;background:#1f4f66;color:#fff;font-weight:800;cursor:pointer}
+.chat-form small{display:block;margin-top:6px;color:#6b7880;font-size:.65rem;line-height:1.3}
+@media(max-width:560px){
+  .chat-launcher{right:14px;bottom:14px}
+  .chat-panel{right:0;bottom:0;width:100vw;height:100dvh;max-height:none;border:0;border-radius:0}
+}

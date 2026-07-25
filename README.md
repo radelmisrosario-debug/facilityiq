@@ -1,4 +1,9 @@
-# FacilityIQ V06 - Plant Model
+# FacilityIQ V07 - Troubleshooting Assistant
+
+V07 adds an on-device conversational assistant that correlates a technician's
+question with the equipment catalog, symptoms, locations, models, manuals, and
+guided diagnostic trees. It requires no API key or external service and keeps
+recent conversation state in the browser.
 
 V06 adds an interactive plant model built around the site's actual hydronic relationships.
 
