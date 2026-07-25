@@ -48,7 +48,7 @@ function renderAssetsHome(){
   const grid=document.getElementById("asset-grid");
   function draw(){
     const q=input.value.trim().toLowerCase();
-    const list=Object.values(assets).filter(a=>[a.id,a.name,a.category,a.manufacturer,a.model,a.location,...facilityIqRoomsForAsset(a.id).map(room=>`room ${room}`),...a.problems.flatMap(p=>[p.name,p.description])].join(" ").toLowerCase().includes(q));
+    const list=Object.values(assets).filter(a=>[a.id,a.name,a.category,a.manufacturer,a.model,a.location,...facilityIqRoomsForAsset(a.id).flatMap(room=>[`room ${room}`,`lab ${room}`,`laboratory ${room}`]),...a.problems.flatMap(p=>[p.name,p.description])].join(" ").toLowerCase().includes(q));
     grid.innerHTML=list.map(a=>`<button class="card" data-asset="${esc(a.id)}"><span class="asset-id">${esc(a.id)}</span><h2>${esc(a.name)}</h2><p class="meta">${esc(a.category)}<br>${esc(a.location)}</p></button>`).join("");
     grid.querySelectorAll("[data-asset]").forEach(b=>b.onclick=()=>setRoute({asset:b.dataset.asset}));
   }
@@ -72,7 +72,7 @@ function renderAsset(asset){
   pageTitle.textContent=asset.name;homeButton.hidden=false;
   const manual=asset.manual?`<a class="manual-button" href="${asset.manual}" target="_blank" rel="noopener">View Manual</a>`:`<span class="small-note">Manual not uploaded yet</span>`;
   const servedRooms=facilityIqRoomsForAsset(asset.id);
-  const roomList=servedRooms.length?`<div class="served-rooms"><strong>Rooms served</strong><p>Each listed area has a dedicated CAV/VAV terminal. Terminal type and tag remain to be confirmed.</p><div>${servedRooms.map(room=>`<span>${esc(room)}</span>`).join("")}</div></div>`:"";
+  const roomList=servedRooms.length?`<div class="served-rooms"><strong>Rooms / labs served</strong><p>“Room” and “Lab” are interchangeable in FacilityIQ. Each listed AHU area has a dedicated CAV/VAV terminal; terminal type and tag remain to be confirmed.</p><div>${servedRooms.map(room=>`<span>${esc(room)}</span>`).join("")}</div></div>`:"";
   const directSystems=Object.values(facilitySystems).filter(s=>s.nodes.some(n=>n.asset===asset.id));
   const inferredSystems=asset.category==="Air Handling Unit"?[facilitySystems.chilledWater,facilitySystems.hotWater,facilitySystems.controlAir]:[];
   const relatedSystems=[...new Map([...directSystems,...inferredSystems].filter(Boolean).map(system=>[system.id,system])).values()];

@@ -12,7 +12,7 @@ const facilityIqChat = (() => {
     words(query).forEach(word => total += target.split(" ").includes(word)?4:target.includes(word)?1:0);
     return total;
   }
-  function assetText(asset){return [asset.id,asset.name,asset.category,asset.manufacturer,asset.model,asset.location,...facilityIqRoomsForAsset(asset.id).map(room=>`room ${room}`)].join(" ")}
+  function assetText(asset){return [asset.id,asset.name,asset.category,asset.manufacturer,asset.model,asset.location,...facilityIqRoomsForAsset(asset.id).flatMap(room=>[`room ${room}`,`lab ${room}`,`laboratory ${room}`])].join(" ")}
   function assetMatches(query){return Object.values(assets).map(asset=>({asset,score:score(query,assetText(asset))})).filter(x=>x.score).sort((a,b)=>b.score-a.score).slice(0,4)}
   function problemMatches(query,asset){return asset.problems.map(problem=>({problem,score:score(query,`${problem.name} ${problem.description}`)})).filter(x=>x.score).sort((a,b)=>b.score-a.score)}
   function globalProblemMatches(query){return Object.values(assets).flatMap(asset=>problemMatches(query,asset).map(x=>({asset,...x}))).sort((a,b)=>b.score-a.score).slice(0,6)}
@@ -23,7 +23,7 @@ const facilityIqChat = (() => {
   function problemActions(asset){return asset.problems.map(problem=>({label:problem.name,action:"problem",value:`${asset.id}|${problem.id}`}))}
   function chooseProblem(asset,problem){state.asset=asset;state.problem=problem;state.stepId=problem.startStep;save();presentStep()}
   function roomComfortRequest(query){
-    const roomMatch=query.match(/\broom\s*#?\s*([0-9]{3}[a-z]?)\b/i);
+    const roomMatch=query.match(/\b(?:room|lab|laboratory)\s*#?\s*([0-9]{3}[a-z]?)\b/i);
     const comfortMatch=query.match(/\b(too\s+hot|hot|warm|too\s+cold|cold|freezing|temperature|temp|uncomfortable|too\s+humid|humid|humidity)\b/i);
     if(!roomMatch||!comfortMatch)return null;
     const room=roomMatch[1].toUpperCase(),condition=/humid/i.test(comfortMatch[1])?"humid":/cold|freezing/i.test(comfortMatch[1])?"cold":/hot|warm/i.test(comfortMatch[1])?"hot":"temperature concern";

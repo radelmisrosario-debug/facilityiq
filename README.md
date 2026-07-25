@@ -23,6 +23,9 @@ unconfirmed. Room-comfort diagnosis checks the terminal airflow setpoint,
 measured airflow, damper command/position, and inlet pressure before escalating
 to the AHU and central utilities.
 
+The terms "Room," "Lab," and "Laboratory" are accepted as equivalent location
+aliases for every mapped area, including the dedicated Room/Lab 503 system.
+
 V08 introduces a dedicated home screen with three clear starting points:
 
 - Troubleshoot an individual asset
