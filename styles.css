@@ -228,6 +228,8 @@ h1,h2,h3,p{margin-top:0}
 .served-rooms>strong{display:block;margin-bottom:9px;color:#405460}
 .served-rooms>div{display:flex;flex-wrap:wrap;gap:6px}
 .served-rooms span{display:inline-block;border:1px solid #ced9df;border-radius:999px;padding:5px 9px;background:#f5f8f9;color:#405460;font-size:.78rem;font-weight:700}
+.operating-note{margin-top:16px;border-left:4px solid #28775a;border-radius:8px;padding:12px 14px;background:#eef8f3;color:#294b3e}
+.operating-note p{margin:6px 0 0;font-size:.9rem;line-height:1.5}
 @media(max-width:650px){
   .launch-hero{padding-top:30px}
   .launch-grid{grid-template-columns:1fr}

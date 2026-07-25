@@ -55,6 +55,11 @@ const diagnosticProfiles = {
       {id:"returnAir",label:"Return-air temperature",unit:"°F",type:"number",step:"0.1"},
       {id:"supplyAir",label:"Supply-air temperature",unit:"°F",type:"number",step:"0.1"},
       {id:"mixedAir",label:"Mixed-air temperature",unit:"°F",type:"number",step:"0.1"},
+      {id:"chilledWaterSupply",label:"Chilled-water supply temperature",unit:"°F",type:"number",step:"0.1"},
+      {id:"chilledWaterSetpoint",label:"Active chilled-water setpoint",unit:"°F",type:"number",step:"0.1"},
+      {id:"controlAirPressure",label:"Control-air pressure at AHU",unit:"PSI",type:"number",step:"0.1"},
+      {id:"coolingValveCommand",label:"Cooling-valve command",unit:"%",type:"number",step:"1"},
+      {id:"heatingValveCommand",label:"Heating-valve command",unit:"%",type:"number",step:"1"},
       {id:"staticPressure",label:"Duct static pressure",unit:"in. w.c.",type:"number",step:"0.01"},
       {id:"speed",label:"Fan VFD speed",unit:"Hz",type:"number",step:"0.1"},
       {id:"motorAmps",label:"Fan motor current",unit:"A",type:"number",step:"0.1"},
@@ -200,6 +205,18 @@ function diagnosticResults(profile,values){
       r.push({label:"Air temperature split",value:`${fmt(split)}°F`,state:split<=0?"high":"info",
         note:split<=0?"Supply air is not cooler than return air. Check mode, sensors, coil valve, chilled-water flow, and heating command.":"Compare with outside-air percentage, humidity load, SAT setpoint, and coil performance."});
     }
+    const chw=n(values.chilledWaterSupply),chwSetpoint=n(values.chilledWaterSetpoint);
+    if(chw!==null&&chwSetpoint!==null){
+      const deviation=chw-chwSetpoint;
+      r.push({label:"Chilled-water setpoint deviation",value:`${fmt(deviation)}°F`,state:deviation>2?"high":deviation>1?"caution":"normal",
+        note:deviation>2?"Supply water is more than 2°F above the active setpoint. Check the Desigo plant setpoint, enabled chiller and PCWP, secondary pumps, loop DP, and distribution before blaming the AHU coil.":"Compare the remaining cooling performance with valve position, water flow, coil condition, and load."});
+    }
+    const controlAir=n(values.controlAirPressure);
+    if(controlAir!==null)r.push({label:"Recorded control-air pressure",value:`${fmt(controlAir)} PSI`,state:"info",
+      note:"Compare with the approved site operating range at both the header and AHU branch. Low air can leave the heating valve open and cooling valve closed."});
+    const coolingCommand=n(values.coolingValveCommand),heatingCommand=n(values.heatingValveCommand);
+    if(coolingCommand!==null||heatingCommand!==null)r.push({label:"Pneumatic valve commands",value:`Cooling ${coolingCommand===null?"—":fmt(coolingCommand)+"%"} · Heating ${heatingCommand===null?"—":fmt(heatingCommand)+"%"}`,state:"info",
+      note:"Compare Desigo commands with physical valve stem/linkage positions. Cooling is normally closed; heating is normally open on loss of control air."});
   }
   if(profile==="dehumidifier"){
     const er=n(values.enteringRh),lr=n(values.leavingRh);

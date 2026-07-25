@@ -7,6 +7,13 @@ AHU-05, and AHU-06. A chat request such as "Room 144 is too hot" first directs
 the technician to verify setpoint, occupancy mode, temperature, and overrides
 in Desigo, then links to the serving AHU and its troubleshooting guide.
 
+AHU high-temperature diagnosis also verifies the active chilled-water setpoint,
+actual chilled-water supply temperature, and pneumatic control-air availability.
+The House Air Compressors are modeled as the source for the AHU pneumatic
+valves. Heating valves are normally open and cooling valves are normally closed,
+so loss of control air is treated as a possible simultaneous-heating and
+loss-of-cooling condition.
+
 V08 introduces a dedicated home screen with three clear starting points:
 
 - Troubleshoot an individual asset

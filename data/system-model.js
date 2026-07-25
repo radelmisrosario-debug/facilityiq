@@ -55,5 +55,26 @@ const facilitySystems={
     ],
     links:[["BOILERS","HW-SUPPLY"],["HW-SUPPLY","HWP-01"],["HW-SUPPLY","HWP-02"],["HWP-01","HEATING-LOADS"],["HWP-02","HEATING-LOADS"],["HEATING-LOADS","BOILERS"]],
     commonSymptoms:[{name:"Low hot-water DP",checks:["Verify DP transmitter against calibrated gauges.","Check HWP lead/lag status, command, VFD speed, and actual pump DP.","Confirm pump rotation, valve lineup, strainers, and available boiler supply temperature."]}]
+  },
+  controlAir:{
+    id:"controlAir",name:"AHU Pneumatic Control-Air System",description:"House-air compressors and distribution serving the pneumatic heating and cooling valves at the building AHUs.",
+    notes:[
+      "The house-air compressors supply control air to the AHU pneumatic valve actuators.",
+      "AHU heating valves are normally open; AHU cooling valves are normally closed.",
+      "Loss of control air can open heating while closing cooling, creating a high-temperature condition.",
+      "Confirm the designated lead/active compressor and approved header-pressure range before changing equipment status."
+    ],
+    nodes:[
+      {id:"House-AC-01",label:"House Air Compressor 01",sub:"Room 805",type:"pump",asset:"House-AC-01",x:20,y:20},
+      {id:"House-AC-02",label:"House Air Compressor 02",sub:"Room 805",type:"pump",asset:"House-AC-02",x:50,y:20},
+      {id:"House-AC-03",label:"House Air Compressor 03",sub:"Room 182",type:"pump",asset:"House-AC-03",x:80,y:20},
+      {id:"AIR-HEADER",label:"Control-Air Header",sub:"Receiver / dryer / filters / regulators",type:"header",x:50,y:50},
+      {id:"AHU-PNEUMATICS",label:"AHU Pneumatic Valves",sub:"Heating NO · Cooling NC",type:"load",x:50,y:80}
+    ],
+    links:[["House-AC-01","AIR-HEADER"],["House-AC-02","AIR-HEADER"],["House-AC-03","AIR-HEADER"],["AIR-HEADER","AHU-PNEUMATICS"]],
+    commonSymptoms:[
+      {name:"One AHU has a valve-control problem",checks:["Compare Desigo valve command with physical valve position.","Measure control-air pressure at the AHU branch and actuator.","Inspect local regulator, tubing, transducer/positioner, actuator, linkage, and valve stroke.","Remember that heating fails open and cooling fails closed when control air is lost."]},
+      {name:"Multiple AHUs are warm or heating unexpectedly",checks:["Check common control-air header pressure and the active House Air Compressor first.","Inspect receiver, dryer, filters, regulators, isolation valves, and header leaks.","Confirm branch pressures at an affected AHU.","After air is restored, verify heating valves drive closed and cooling valves can drive open."]}
+    ]
   }
 };
