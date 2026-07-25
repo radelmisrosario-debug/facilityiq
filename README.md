@@ -9,10 +9,14 @@ in Desigo, then links to the serving AHU and its troubleshooting guide.
 
 AHU high-temperature diagnosis also verifies the active chilled-water setpoint,
 actual chilled-water supply temperature, and pneumatic control-air availability.
-The House Air Compressors are modeled as the source for the AHU pneumatic
-valves. Heating valves are normally open and cooling valves are normally closed,
-so loss of control air is treated as a possible simultaneous-heating and
-loss-of-cooling condition.
+The dedicated Control Air Compressor (`Control-AC`) and Control Air Dryer supply
+the AHU pneumatic valves. Heating valves are normally open and cooling valves
+are normally closed, so loss of control air is treated as a possible
+simultaneous-heating and loss-of-cooling condition.
+
+House Air Compressors 01–03 supply laboratory compressed air only. They are
+modeled in a separate Laboratory Compressed-Air System and are not part of the
+AHU pneumatic control circuit.
 
 Room 503 is excluded from the AHU-02 room list. It is mapped to the dedicated
 Bry-Air dehumidifier and 503 Aircon Tech chiller system instead.

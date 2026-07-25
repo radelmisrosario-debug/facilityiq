@@ -292,7 +292,7 @@ const facilityIqKnowledgeBase = {
           {kind:"observation",key:"heatingValveNotClosing",weight:48},
           {kind:"observation",key:"multipleAhusWarm",weight:20}
         ],
-        action:"Check the active House Air Compressor, header and AHU branch pressure, regulators and leaks; then compare valve commands with physical positions.",
+        action:"Check the dedicated Control Air Compressor, Control Air Dryer, header and AHU branch pressure, regulators and leaks; then compare valve commands with physical positions.",
         reference:"Heating valves are normally open and cooling valves normally closed on loss of control air."
       },
       {
