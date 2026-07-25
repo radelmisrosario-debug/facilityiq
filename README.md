@@ -30,6 +30,15 @@ to the AHU and central utilities.
 The terms "Room," "Lab," and "Laboratory" are accepted as equivalent location
 aliases for every mapped area, including the dedicated Room/Lab 503 system.
 
+## Complete evidence coverage
+
+Every symptom listed for every asset is available in the evidence-analysis
+dropdown. Hand-authored weighted engineering models are preserved. Symptoms
+without a custom model are generated from their existing guided diagnostic
+tree, using each yes/no branch as tri-state field evidence and each terminal
+result as a ranked diagnostic outcome. Primary chilled-water pumps and the
+emergency generator now have diagnostic profiles as well.
+
 V08 introduces a dedicated home screen with three clear starting points:
 
 - Troubleshoot an individual asset

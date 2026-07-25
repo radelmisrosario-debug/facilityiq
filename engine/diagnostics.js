@@ -117,6 +117,17 @@ const diagnosticProfiles = {
       {id:"motorFla",label:"Compressor nameplate FLA",unit:"A",type:"number",step:"0.1"}
     ]
   },
+  generator: {
+    title:"Emergency Generator Diagnostic Measurements",
+    fields:[
+      {id:"batteryVoltage",label:"Starting-battery voltage",unit:"VDC",type:"number",step:"0.1"},
+      {id:"engineSpeed",label:"Engine speed",unit:"RPM",type:"number",step:"1"},
+      {id:"outputVoltage",label:"Generator output voltage",unit:"VAC",type:"number",step:"1"},
+      {id:"outputFrequency",label:"Generator output frequency",unit:"Hz",type:"number",step:"0.1"},
+      {id:"oilPressure",label:"Engine oil pressure",unit:"PSI",type:"number",step:"0.1"},
+      {id:"coolantTemperature",label:"Coolant temperature",unit:"°F",type:"number",step:"0.1"}
+    ]
+  },
   vacuum: {
     title:"Vacuum Pump Diagnostic Measurements",
     fields:[
@@ -133,7 +144,7 @@ function profileForAsset(asset){
   const c=(asset.category+" "+asset.name).toLowerCase();
   if(c.includes("chiller")) return "chiller";
   if(c.includes("dehumid")) return "dehumidifier";
-  if(c.includes("secondary chilled water pump")||c.includes("hot water loop pump")) return "hydronic";
+  if(c.includes("chilled water pump")||c.includes("chilled-water pump")||c.includes("hot water loop pump")) return "hydronic";
   if(c.includes("air dryer")||c.includes("dryer")) return "dryer";
   if(c.includes("air compressor")||c.includes("compressor")) return "airCompressor";
   if(c.includes("air handling")||asset.id.startsWith("AHU")) return "ahu";
@@ -141,6 +152,7 @@ function profileForAsset(asset){
   if(c.includes("boiler")) return "boiler";
   if(c.includes("ups")) return "ups";
   if(c.includes("vacuum")) return "vacuum";
+  if(c.includes("generator")) return "generator";
   return null;
 }
 

@@ -178,7 +178,7 @@ function fiqRangeMarkup(results){
 function fiqRenderRankings(rankings){
   if(!rankings.length)return `<div class="warning"><strong>No weighted model is available for this symptom yet.</strong> Continue with the guided troubleshooting tree.</div>`;
   return `<div class="ranked-diagnoses">
-    <div class="ranking-disclaimer">Relative diagnostic ranking based on entered evidence. Scores are not statistically validated probabilities.</div>
+    <div class="ranking-disclaimer">Relative diagnostic ranking based on entered evidence. Scores are not statistically validated probabilities. Guide-derived models use the asset’s existing approved yes/no diagnostic path.</div>
     ${rankings.map((item,index)=>`
       <article class="ranked-cause">
         <div class="rank-head">
