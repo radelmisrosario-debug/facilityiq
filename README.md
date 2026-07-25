@@ -1,5 +1,12 @@
 # FacilityIQ V08 - Main Launch Page
 
+## Room comfort lookup
+
+FacilityIQ includes the AHU-to-room assignments for AHU-01, AHU-02, AHU-04,
+AHU-05, and AHU-06. A chat request such as "Room 144 is too hot" first directs
+the technician to verify setpoint, occupancy mode, temperature, and overrides
+in Desigo, then links to the serving AHU and its troubleshooting guide.
+
 V08 introduces a dedicated home screen with three clear starting points:
 
 - Troubleshoot an individual asset

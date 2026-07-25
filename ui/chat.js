@@ -12,7 +12,7 @@ const facilityIqChat = (() => {
     words(query).forEach(word => total += target.split(" ").includes(word)?4:target.includes(word)?1:0);
     return total;
   }
-  function assetText(asset){return [asset.id,asset.name,asset.category,asset.manufacturer,asset.model,asset.location].join(" ")}
+  function assetText(asset){return [asset.id,asset.name,asset.category,asset.manufacturer,asset.model,asset.location,...facilityIqRoomsForAsset(asset.id).map(room=>`room ${room}`)].join(" ")}
   function assetMatches(query){return Object.values(assets).map(asset=>({asset,score:score(query,assetText(asset))})).filter(x=>x.score).sort((a,b)=>b.score-a.score).slice(0,4)}
   function problemMatches(query,asset){return asset.problems.map(problem=>({problem,score:score(query,`${problem.name} ${problem.description}`)})).filter(x=>x.score).sort((a,b)=>b.score-a.score)}
   function globalProblemMatches(query){return Object.values(assets).flatMap(asset=>problemMatches(query,asset).map(x=>({asset,...x}))).sort((a,b)=>b.score-a.score).slice(0,6)}
@@ -22,6 +22,26 @@ const facilityIqChat = (() => {
   function message(role,text,extra={}){state.messages.push({role,text,...extra});save();draw()}
   function problemActions(asset){return asset.problems.map(problem=>({label:problem.name,action:"problem",value:`${asset.id}|${problem.id}`}))}
   function chooseProblem(asset,problem){state.asset=asset;state.problem=problem;state.stepId=problem.startStep;save();presentStep()}
+  function roomComfortRequest(query){
+    const roomMatch=query.match(/\broom\s*#?\s*([0-9]{3}[a-z]?)\b/i);
+    const comfortMatch=query.match(/\b(too\s+hot|hot|warm|too\s+cold|cold|freezing|temperature|temp|uncomfortable)\b/i);
+    if(!roomMatch||!comfortMatch)return null;
+    const room=roomMatch[1].toUpperCase(),condition=/cold|freezing/i.test(comfortMatch[1])?"cold":/hot|warm/i.test(comfortMatch[1])?"hot":"temperature concern";
+    return {room,condition,ahus:facilityIqAhusForRoom(room)};
+  }
+  function handleRoomComfort(request){
+    if(!request.ahus.length)return message("assistant",`I don’t have a serving AHU assignment for Room ${request.room} yet. Verify the room number, then browse the equipment list or ask your controls operator.`,{eyebrow:"Room lookup",actions:[{label:"Browse equipment",action:"browse"}]});
+    const names=request.ahus.map(asset=>asset.id).join(" and ");
+    const conditionText=request.condition==="temperature concern"?"has a temperature concern":`is too ${request.condition}`;
+    message("assistant",`Room ${request.room} ${conditionText}. First, check the room in Desigo: confirm the current temperature, occupied/unoccupied mode, effective heating and cooling setpoints, and whether a temporary setpoint override is active.\n\nRoom ${request.room} is served by ${names}. If the Desigo setpoint and mode are correct, continue at the serving AHU and check supply-air temperature, airflow, fan/VFD status, and the chilled-water or heating command.`,{
+      eyebrow:"Room comfort troubleshooting",
+      detail:request.ahus.length>1?"This room appears on more than one AHU assignment. Confirm the active serving unit in Desigo or the current controls graphics before troubleshooting equipment.":"",
+      actions:request.ahus.flatMap(asset=>[
+        {label:`Open ${asset.id}`,action:"asset-page",value:asset.id},
+        ...(request.condition==="hot"?[{label:`Start ${asset.id} high-temperature checks`,action:"problem",value:`${asset.id}|high-space-temperature`}]:[])
+      ])
+    });
+  }
   function presentStep(){
     const step=steps[state.stepId];
     if(!step)return message("assistant","I can’t find the next check. Open the equipment page to continue.",{actions:[{label:`Open ${state.asset.id}`,action:"asset-page",value:state.asset.id}]});
@@ -30,6 +50,7 @@ const facilityIqChat = (() => {
   }
   function submit(raw){
     const query=raw.trim();if(!query)return;message("user",query);
+    const roomRequest=roomComfortRequest(query);if(roomRequest)return handleRoomComfort(roomRequest);
     const equipment=assetMatches(query), current=state.asset?problemMatches(query,state.asset):[], issues=globalProblemMatches(query);
     if(state.asset&&current[0]?.score>=4)return message("assistant",`That sounds closest to “${current[0].problem.name}” for ${state.asset.id}. I’ll begin with a safe first check.`,{actions:[{label:"Start checks",action:"problem",value:`${state.asset.id}|${current[0].problem.id}`}]});
     if(equipment.length){
