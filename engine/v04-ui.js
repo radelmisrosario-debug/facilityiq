@@ -105,8 +105,14 @@ function bindDiagnosticPanel(asset){
 
 /* ===== FacilityIQ V05 tri-state and evidence-quality UI overrides ===== */
 
-function fiqObservationMarkup(profile){
-  return (facilityIqObservations[profile] || []).map(([key,label])=>`
+function fiqObservationMarkup(profile,problemId){
+  const labels=Object.fromEntries(facilityIqObservations[profile]||[]);
+  const usedKeys=[...new Set((facilityIqKnowledgeBase?.[profile]?.[problemId]||[])
+    .flatMap(failure=>failure.evidence||[])
+    .filter(rule=>rule.kind==="observation")
+    .map(rule=>rule.key))];
+  const observations=usedKeys.length?usedKeys.map(key=>[key,labels[key]||key]):(facilityIqObservations[profile]||[]);
+  return observations.map(([key,label])=>`
     <div class="evidence-option evidence-tristate" data-evidence-row="${esc(key)}">
       <span>${esc(label)}</span>
       <div class="tri-buttons" role="group" aria-label="${esc(label)}">
@@ -144,12 +150,18 @@ function fiqFriendlyField(profile,key){
   return found?.label||extras[key]||key;
 }
 
+function fiqFriendlyEvidence(profile,item){
+  if(item.kind==="measurement")return fiqFriendlyField(profile,item.key);
+  const label=Object.fromEntries(facilityIqObservations[profile]||[])[item.key]||item.key;
+  return `Verify: ${label}`;
+}
+
 function fiqQualityMarkup(profile,quality,contradictions){
   const level=quality.completeness>=65?"strong":quality.completeness>=35?"moderate":"limited";
   return `<section class="quality-panel ${level}">
     <div class="quality-head"><div><span class="status">EVIDENCE QUALITY</span><h3>${level[0].toUpperCase()+level.slice(1)} diagnostic evidence</h3></div><b>${quality.completeness}% complete</b></div>
     <div class="quality-track"><div style="width:${quality.completeness}%"></div></div>
-    ${quality.missing.length?`<div class="next-tests"><strong>Recommended next measurements</strong><ol>${quality.missing.map(k=>`<li>${esc(fiqFriendlyField(profile,k))}</li>`).join("")}</ol></div>`:`<p class="quality-ok">All required measurements for this model were entered.</p>`}
+    ${quality.nextEvidence?.length?`<div class="next-tests"><strong>Highest-value next checks</strong><ol>${quality.nextEvidence.map(item=>`<li>${esc(fiqFriendlyEvidence(profile,item))}</li>`).join("")}</ol></div>`:`<p class="quality-ok">All modeled evidence for this symptom has been classified.</p>`}
     ${contradictions.length?`<div class="contradictions"><strong>Conflicting evidence detected</strong>${contradictions.map(x=>`<p>${esc(x)}</p>`).join("")}</div>`:""}
   </section>`;
 }
@@ -186,6 +198,7 @@ function renderDiagnosticPanel(asset){
   if(!profileName)return "";
   const profile=diagnosticProfiles[profileName],saved=loadMeasurements(asset.id);
   const problemOptions=fiqProblemOptions(asset,profileName);
+  const defaultProblem=asset.problems.find(problem=>facilityIqKnowledgeBase?.[profileName]?.[problem.id])?.id||"";
   const airflowField=profileName==="ahu"?`<label class="measurement-field"><span>Measured airflow</span><div class="input-unit"><input inputmode="decimal" type="number" step="1" data-measure="airflow" value="${saved.airflow??""}" placeholder="—"><b>CFM</b></div></label>`:"";
   const flowField=profileName==="boiler"?`<label class="measurement-field"><span>Hot-water flow</span><div class="input-unit"><input inputmode="decimal" type="number" step="0.1" data-measure="flow" value="${saved.flow??""}" placeholder="—"><b>GPM</b></div></label>`:"";
 
@@ -193,8 +206,9 @@ function renderDiagnosticPanel(asset){
     <div class="diagnostic-heading"><div><span class="status">V05 EVIDENCE ENGINE</span><h3>Diagnostic Coverage and Evidence Quality</h3>
     <p class="meta">Choose a supported symptom, enter measured values, and classify each field observation as Yes, No, or Unknown.</p></div></div>
     ${problemOptions?`<label class="diagnosis-select"><span>Symptom to analyze</span><select id="weighted-problem">${problemOptions}</select></label>`:`<div class="warning">A weighted model has not yet been configured for this asset profile. Engineering calculations remain available.</div>`}
+    <div class="evidence-context"><label><span>Operating condition</span><select id="evidence-mode" data-measure="evidenceMode"><option${saved.evidenceMode==="Cooling call"?" selected":""}>Cooling call</option><option${saved.evidenceMode==="Heating call"?" selected":""}>Heating call</option><option${saved.evidenceMode==="Occupied"?" selected":""}>Occupied</option><option${saved.evidenceMode==="Unoccupied"?" selected":""}>Unoccupied</option><option${saved.evidenceMode==="Startup"?" selected":""}>Startup</option><option${saved.evidenceMode==="Unknown"?" selected":""}>Unknown</option></select></label><label><span>Observation time</span><input id="evidence-time" data-measure="observedAt" type="datetime-local" value="${esc(saved.observedAt||"")}"></label></div>
     <div class="measurement-grid">${profile.fields.map(f=>`<label class="measurement-field"><span>${esc(f.label)}</span><div class="input-unit"><input inputmode="decimal" type="${f.type}" step="${f.step}" data-measure="${f.id}" value="${saved[f.id]??""}" placeholder="—"><b>${esc(f.unit)}</b></div></label>`).join("")}${airflowField}${flowField}</div>
-    ${problemOptions?`<details class="evidence-box"><summary>Field observations — Yes / No / Unknown</summary><div class="evidence-grid">${fiqObservationMarkup(profileName)}</div></details>`:""}
+    ${problemOptions?`<details class="evidence-box" open><summary>Symptom-specific field observations — Yes / No / Unknown</summary><div id="evidence-grid" class="evidence-grid">${fiqObservationMarkup(profileName,defaultProblem)}</div></details>`:""}
     <div class="button-row diagnostic-actions"><button id="analyze-readings" class="primary-button">Run Diagnostic Analysis</button><button id="clear-readings" class="secondary-button">Clear</button></div>
     <div id="diagnostic-output"></div>
   </section>`;
@@ -205,6 +219,12 @@ function bindDiagnosticPanel(asset){
   if(!analyze)return;
   const profile=profileForAsset(asset);
   fiqBindTriState();
+  const problemSelect=document.getElementById("weighted-problem");
+  if(problemSelect)problemSelect.onchange=()=>{
+    const grid=document.getElementById("evidence-grid");
+    grid.innerHTML=fiqObservationMarkup(profile,problemSelect.value);
+    fiqBindTriState();
+  };
   const collect=()=>Object.fromEntries([...document.querySelectorAll("[data-measure]")].map(x=>[x.dataset.measure,x.value]));
 
   analyze.onclick=()=>{

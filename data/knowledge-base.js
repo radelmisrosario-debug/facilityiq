@@ -237,6 +237,80 @@ const facilityIqKnowledgeBase = {
   },
 
   ahu: {
+    "high-space-temperature": [
+      {
+        id:"room-control",
+        title:"Room setpoint, occupancy, override, or sensor issue",
+        base:12,
+        required:["roomTemperature","roomCoolingSetpoint"],
+        evidence:[
+          {kind:"observation",key:"roomNotOccupied",weight:34},
+          {kind:"observation",key:"setpointOverrideActive",weight:45},
+          {kind:"observation",key:"roomSensorMismatch",weight:48},
+          {kind:"measurement",key:"roomTemperature",op:"<=",other:"roomCoolingSetpoint",weight:35}
+        ],
+        action:"Verify effective heating/cooling setpoints, occupancy, schedule, overrides, and the room sensor in Desigo before changing equipment operation.",
+        reference:"Use the approved room-control sequence and site change-control process."
+      },
+      {
+        id:"terminal-airflow",
+        title:"Dedicated CAV/VAV terminal is not delivering required airflow",
+        base:18,
+        required:["terminalAirflow","terminalAirflowSetpoint"],
+        evidence:[
+          {kind:"observation",key:"terminalAirflowLow",weight:52},
+          {kind:"observation",key:"terminalDamperNotResponding",weight:46},
+          {kind:"observation",key:"terminalInletPressureLow",weight:32},
+          {kind:"observation",key:"terminalSensorMismatch",weight:34},
+          {kind:"measurement",key:"terminalAirflow",op:"<",other:"terminalAirflowSetpoint",weight:30}
+        ],
+        action:"Compare airflow setpoint with measured airflow and damper command with position. Verify inlet static pressure, actuator/linkage, sensor tubing, flow pickup, and downstream path.",
+        reference:"Each served room has a dedicated CAV/VAV terminal; exact type and tag remain to be confirmed."
+      },
+      {
+        id:"chilled-water-plant",
+        title:"Chilled-water temperature or distribution problem",
+        base:16,
+        required:["chilledWaterSupply","chilledWaterSetpoint"],
+        evidence:[
+          {kind:"observation",key:"chilledWaterAboveSetpoint",weight:55},
+          {kind:"observation",key:"lowLoopDp",weight:38},
+          {kind:"observation",key:"multipleAhusWarm",weight:32},
+          {kind:"measurement",key:"chilledWaterSupply",op:">",other:"chilledWaterSetpoint",weight:35}
+        ],
+        action:"Verify the active Desigo chilled-water setpoint, actual supply temperature, enabled chiller and PCWP, SCWP status, loop DP, and distribution path.",
+        reference:"Use the Site Chilled-Water System relationship and approved plant sequence."
+      },
+      {
+        id:"control-air-valves",
+        title:"Control-air or pneumatic valve response problem",
+        base:15,
+        required:["controlAirPressure"],
+        evidence:[
+          {kind:"observation",key:"controlAirLow",weight:58},
+          {kind:"observation",key:"coolingValveNotOpening",weight:48},
+          {kind:"observation",key:"heatingValveNotClosing",weight:48},
+          {kind:"observation",key:"multipleAhusWarm",weight:20}
+        ],
+        action:"Check the active House Air Compressor, header and AHU branch pressure, regulators and leaks; then compare valve commands with physical positions.",
+        reference:"Heating valves are normally open and cooling valves normally closed on loss of control air."
+      },
+      {
+        id:"ahu-airflow-coil",
+        title:"AHU airflow, coil, or heat-transfer problem",
+        base:13,
+        required:["returnAir","supplyAir"],
+        evidence:[
+          {kind:"observation",key:"filterDirty",weight:35},
+          {kind:"observation",key:"coilDirty",weight:35},
+          {kind:"observation",key:"coilAirBound",weight:38},
+          {kind:"observation",key:"lowAirflow",weight:38},
+          {kind:"observation",key:"outsideDamperOpen",weight:18}
+        ],
+        action:"Verify fan/VFD operation, static pressure, filters, coil face, outside-air load, chilled-water flow, strainer, venting, and sensor accuracy.",
+        reference:"Compare supply-air response with the AHU sequence and measured water/air conditions."
+      }
+    ],
     "not-cooling": [
       {
         id:"no-chilled-water",
@@ -414,6 +488,19 @@ const facilityIqObservations = {
     ["visibleAir","Air is visible at vents or sight points"]
   ],
   ahu: [
+    ["roomNotOccupied","Room is not in the expected occupied mode"],
+    ["setpointOverrideActive","An incorrect or unexpected room setpoint override is active"],
+    ["roomSensorMismatch","Room sensor disagrees with a calibrated reference"],
+    ["terminalAirflowLow","CAV/VAV measured airflow is below its airflow setpoint"],
+    ["terminalDamperNotResponding","Terminal damper command does not match physical position or response"],
+    ["terminalInletPressureLow","Primary-air static pressure at the terminal inlet is inadequate"],
+    ["terminalSensorMismatch","Terminal airflow sensor disagrees with field verification"],
+    ["chilledWaterAboveSetpoint","Actual chilled-water supply temperature is above the active setpoint"],
+    ["lowLoopDp","Chilled-water loop differential pressure is low"],
+    ["multipleAhusWarm","Multiple AHUs or areas are warm at the same time"],
+    ["controlAirLow","Control-air pressure is below the approved site range"],
+    ["coolingValveNotOpening","Normally-closed cooling valve is commanded open but not physically opening"],
+    ["heatingValveNotClosing","Normally-open heating valve is commanded closed but not physically closing"],
     ["valveCommandOpen","Cooling-valve command is open"],
     ["valveNotOpen","Cooling valve is not physically opening"],
     ["coilAirBound","Cooling coil appears air bound"],

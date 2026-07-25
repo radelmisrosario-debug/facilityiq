@@ -10,6 +10,11 @@ const facilityIqDedicatedRoomEquipment = {
   "503":["Bry-Air-DEHU","503-Aircon-Tech-Chiller"]
 };
 
+const facilityIqRoomTerminals = Object.fromEntries(
+  [...new Set(Object.values(facilityIqRoomAssignments).flat())]
+    .map(room => [room,{room,type:"CAV/VAV",tag:null,status:"Type and tag to be confirmed"}])
+);
+
 function facilityIqAhusForRoom(room) {
   const normalized = String(room || "").trim().toUpperCase();
   return Object.entries(facilityIqRoomAssignments)
@@ -23,6 +28,10 @@ function facilityIqDedicatedEquipmentForRoom(room) {
   return (facilityIqDedicatedRoomEquipment[normalized] || [])
     .map(assetId => assets[assetId])
     .filter(Boolean);
+}
+
+function facilityIqTerminalForRoom(room) {
+  return facilityIqRoomTerminals[String(room || "").trim().toUpperCase()] || null;
 }
 
 function facilityIqRoomsForAsset(assetId) {

@@ -167,8 +167,15 @@ function fiqEvidenceQuality(profile, problemId, measurements, observations){
   const available = observationRules.length + measurementRules.length;
   const known = knownObservations + knownMeasurements;
   const completeness = available ? Math.round(known/available*100) : 0;
+  const nextEvidence = failures.flatMap(failure=>failure.evidence||[])
+    .filter(rule=>rule.kind==="observation"
+      ? fiqObservationState(observations,rule.key)==="unknown"
+      : fiqNumber(measurements[rule.key])===null)
+    .sort((a,b)=>(b.weight||0)-(a.weight||0))
+    .filter((rule,index,list)=>list.findIndex(item=>item.kind===rule.kind&&item.key===rule.key)===index)
+    .slice(0,3);
 
-  return {required,missing,completeness,known,available};
+  return {required,missing,completeness,known,available,nextEvidence};
 }
 
 function fiqRankFailuresV05(profile, problemId, measurements, observations){
@@ -189,7 +196,10 @@ function fiqRankFailuresV05(profile, problemId, measurements, observations){
         if(state!=="unknown"){
           const expected=rule.value===undefined?true:rule.value;
           const actual=state==="yes";
-          if(actual!==expected) contradicted.push(rule);
+          if(actual!==expected){
+            contradicted.push(rule);
+            score=Math.max(0,score-Math.round((rule.weight||0)*0.35));
+          }
         }
       }
     }
@@ -235,6 +245,15 @@ function fiqDetectContradictions(profile, measurements, observations){
     issues.push("Measured vacuum meets target while isolated-pump performance is marked low.");
   if(profile==="dehumidifier" && n(measurements.leavingRh)<n(measurements.enteringRh) && yes("heaterNotOn") && yes("rotorStopped"))
     issues.push("RH reduction is recorded while both reactivation heat and rotor operation are marked unavailable; verify readings and operating state.");
+  const terminalCommand=n(measurements.terminalDamperCommand),terminalPosition=n(measurements.terminalDamperPosition);
+  const chwSupply=n(measurements.chilledWaterSupply),chwSetpoint=n(measurements.chilledWaterSetpoint);
+  const roomTemperature=n(measurements.roomTemperature),roomCoolingSetpoint=n(measurements.roomCoolingSetpoint);
+  if(profile==="ahu" && terminalCommand!==null && terminalPosition!==null && terminalCommand>=80 && terminalPosition<20)
+    issues.push("The terminal damper is commanded mostly open, but entered position remains nearly closed.");
+  if(profile==="ahu" && chwSupply!==null && chwSetpoint!==null && chwSupply<=chwSetpoint && yes("chilledWaterAboveSetpoint"))
+    issues.push("Entered chilled-water temperature meets setpoint, but the field observation says it is above setpoint.");
+  if(profile==="ahu" && roomTemperature!==null && roomCoolingSetpoint!==null && roomTemperature<=roomCoolingSetpoint && no("roomNotOccupied"))
+    issues.push("The room is entered at or below its cooling setpoint while the complaint is high space temperature; verify the complaint and readings.");
 
   return issues;
 }

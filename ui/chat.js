@@ -27,7 +27,7 @@ const facilityIqChat = (() => {
     const comfortMatch=query.match(/\b(too\s+hot|hot|warm|too\s+cold|cold|freezing|temperature|temp|uncomfortable|too\s+humid|humid|humidity)\b/i);
     if(!roomMatch||!comfortMatch)return null;
     const room=roomMatch[1].toUpperCase(),condition=/humid/i.test(comfortMatch[1])?"humid":/cold|freezing/i.test(comfortMatch[1])?"cold":/hot|warm/i.test(comfortMatch[1])?"hot":"temperature concern";
-    return {room,condition,ahus:facilityIqAhusForRoom(room),dedicatedEquipment:facilityIqDedicatedEquipmentForRoom(room)};
+    return {room,condition,terminal:facilityIqTerminalForRoom(room),ahus:facilityIqAhusForRoom(room),dedicatedEquipment:facilityIqDedicatedEquipmentForRoom(room)};
   }
   function handleRoomComfort(request){
     if(request.dedicatedEquipment.length){
@@ -47,7 +47,7 @@ const facilityIqChat = (() => {
     if(!request.ahus.length)return message("assistant",`I don’t have a serving AHU assignment for Room ${request.room} yet. Verify the room number, then browse the equipment list or ask your controls operator.`,{eyebrow:"Room lookup",actions:[{label:"Browse equipment",action:"browse"}]});
     const names=request.ahus.map(asset=>asset.id).join(" and ");
     const conditionText=request.condition==="temperature concern"?"has a temperature concern":`is too ${request.condition}`;
-    message("assistant",`Room ${request.room} ${conditionText}. First, check the room in Desigo: confirm the current temperature, occupied/unoccupied mode, effective heating and cooling setpoints, and whether a temporary setpoint override is active.\n\nRoom ${request.room} is served by ${names}. For a warm-room call, compare the active chilled-water setpoint with actual chilled-water supply temperature. Then verify control-air pressure at the AHU: the heating valve is normally open and the cooling valve is normally closed, so loss of air can leave heating open while cooling stays closed.\n\nIf the setpoints and utilities are correct, continue with supply-air temperature, airflow, fan/VFD status, valve command versus physical position, and coil water flow.`,{
+    message("assistant",`Room ${request.room} ${conditionText}. First, check the room in Desigo: confirm the current temperature, occupied/unoccupied mode, effective heating and cooling setpoints, and whether a temporary setpoint override is active.\n\nNext, check the room’s dedicated CAV/VAV terminal. Compare its airflow setpoint with measured airflow, damper command with position, and verify primary-air inlet pressure. The terminal type and tag still need to be confirmed.\n\nRoom ${request.room} is served by ${names}. If the terminal is receiving warm air, compare the active chilled-water setpoint with actual chilled-water supply temperature. Then verify control-air pressure at the AHU: the heating valve is normally open and the cooling valve is normally closed, so loss of air can leave heating open while cooling stays closed.\n\nContinue with AHU supply-air temperature, fan/VFD status, valve command versus physical position, and coil water flow.`,{
       eyebrow:"Room comfort troubleshooting",
       detail:request.ahus.length>1?"This room appears on more than one AHU assignment. Confirm the active serving unit in Desigo or the current controls graphics before troubleshooting equipment.":"",
       actions:request.ahus.flatMap(asset=>[

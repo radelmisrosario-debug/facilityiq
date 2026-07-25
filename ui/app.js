@@ -72,7 +72,7 @@ function renderAsset(asset){
   pageTitle.textContent=asset.name;homeButton.hidden=false;
   const manual=asset.manual?`<a class="manual-button" href="${asset.manual}" target="_blank" rel="noopener">View Manual</a>`:`<span class="small-note">Manual not uploaded yet</span>`;
   const servedRooms=facilityIqRoomsForAsset(asset.id);
-  const roomList=servedRooms.length?`<div class="served-rooms"><strong>Rooms served</strong><div>${servedRooms.map(room=>`<span>${esc(room)}</span>`).join("")}</div></div>`:"";
+  const roomList=servedRooms.length?`<div class="served-rooms"><strong>Rooms served</strong><p>Each listed area has a dedicated CAV/VAV terminal. Terminal type and tag remain to be confirmed.</p><div>${servedRooms.map(room=>`<span>${esc(room)}</span>`).join("")}</div></div>`:"";
   const directSystems=Object.values(facilitySystems).filter(s=>s.nodes.some(n=>n.asset===asset.id));
   const inferredSystems=asset.category==="Air Handling Unit"?[facilitySystems.chilledWater,facilitySystems.hotWater,facilitySystems.controlAir]:[];
   const relatedSystems=[...new Map([...directSystems,...inferredSystems].filter(Boolean).map(system=>[system.id,system])).values()];

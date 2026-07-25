@@ -226,10 +226,15 @@ h1,h2,h3,p{margin-top:0}
 .section-intro{margin-top:24px}.section-intro h2{margin:6px 0 8px}.section-intro p{color:#596a74}
 .served-rooms{margin-top:18px;padding-top:16px;border-top:1px solid #dce2e8}
 .served-rooms>strong{display:block;margin-bottom:9px;color:#405460}
+.served-rooms p{margin:0 0 10px;color:#65747d;font-size:.82rem}
 .served-rooms>div{display:flex;flex-wrap:wrap;gap:6px}
 .served-rooms span{display:inline-block;border:1px solid #ced9df;border-radius:999px;padding:5px 9px;background:#f5f8f9;color:#405460;font-size:.78rem;font-weight:700}
 .operating-note{margin-top:16px;border-left:4px solid #28775a;border-radius:8px;padding:12px 14px;background:#eef8f3;color:#294b3e}
 .operating-note p{margin:6px 0 0;font-size:.9rem;line-height:1.5}
+.evidence-context{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0;padding:14px;border:1px solid #d3dde3;border-radius:12px;background:#fff}
+.evidence-context label>span{display:block;margin-bottom:7px;color:#455863;font-size:.8rem;font-weight:800}
+.evidence-context select,.evidence-context input{width:100%;min-height:42px;border:1px solid #bfccd3;border-radius:8px;padding:8px;background:#fff;font:inherit}
+@media(max-width:650px){.evidence-context{grid-template-columns:1fr}}
 @media(max-width:650px){
   .launch-hero{padding-top:30px}
   .launch-grid{grid-template-columns:1fr}

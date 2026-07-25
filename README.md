@@ -17,6 +17,12 @@ loss-of-cooling condition.
 Room 503 is excluded from the AHU-02 room list. It is mapped to the dedicated
 Bry-Air dehumidifier and 503 Aircon Tech chiller system instead.
 
+Each AHU-served area is modeled with a dedicated CAV/VAV terminal. Until the
+terminal schedule is entered, FacilityIQ labels its exact type and tag as
+unconfirmed. Room-comfort diagnosis checks the terminal airflow setpoint,
+measured airflow, damper command/position, and inlet pressure before escalating
+to the AHU and central utilities.
+
 V08 introduces a dedicated home screen with three clear starting points:
 
 - Troubleshoot an individual asset

@@ -55,6 +55,12 @@ const diagnosticProfiles = {
       {id:"returnAir",label:"Return-air temperature",unit:"°F",type:"number",step:"0.1"},
       {id:"supplyAir",label:"Supply-air temperature",unit:"°F",type:"number",step:"0.1"},
       {id:"mixedAir",label:"Mixed-air temperature",unit:"°F",type:"number",step:"0.1"},
+      {id:"roomTemperature",label:"Room temperature",unit:"°F",type:"number",step:"0.1"},
+      {id:"roomCoolingSetpoint",label:"Effective room cooling setpoint",unit:"°F",type:"number",step:"0.1"},
+      {id:"terminalAirflow",label:"CAV/VAV measured airflow",unit:"CFM",type:"number",step:"1"},
+      {id:"terminalAirflowSetpoint",label:"CAV/VAV airflow setpoint",unit:"CFM",type:"number",step:"1"},
+      {id:"terminalDamperCommand",label:"Terminal damper command",unit:"%",type:"number",step:"1"},
+      {id:"terminalDamperPosition",label:"Terminal damper position",unit:"%",type:"number",step:"1"},
       {id:"chilledWaterSupply",label:"Chilled-water supply temperature",unit:"°F",type:"number",step:"0.1"},
       {id:"chilledWaterSetpoint",label:"Active chilled-water setpoint",unit:"°F",type:"number",step:"0.1"},
       {id:"controlAirPressure",label:"Control-air pressure at AHU",unit:"PSI",type:"number",step:"0.1"},
@@ -217,6 +223,24 @@ function diagnosticResults(profile,values){
     const coolingCommand=n(values.coolingValveCommand),heatingCommand=n(values.heatingValveCommand);
     if(coolingCommand!==null||heatingCommand!==null)r.push({label:"Pneumatic valve commands",value:`Cooling ${coolingCommand===null?"—":fmt(coolingCommand)+"%"} · Heating ${heatingCommand===null?"—":fmt(heatingCommand)+"%"}`,state:"info",
       note:"Compare Desigo commands with physical valve stem/linkage positions. Cooling is normally closed; heating is normally open on loss of control air."});
+    const roomTemp=n(values.roomTemperature),roomSetpoint=n(values.roomCoolingSetpoint);
+    if(roomTemp!==null&&roomSetpoint!==null){
+      const deviation=roomTemp-roomSetpoint;
+      r.push({label:"Room cooling deviation",value:`${fmt(deviation)}°F`,state:deviation>2?"high":deviation>0?"caution":"normal",
+        note:deviation>0?"Room temperature is above the entered effective cooling setpoint. Confirm occupancy, overrides, and sensor accuracy before escalating.":"The entered room temperature is not above its effective cooling setpoint."});
+    }
+    const terminalFlow=n(values.terminalAirflow),terminalFlowSetpoint=n(values.terminalAirflowSetpoint);
+    if(terminalFlow!==null&&terminalFlowSetpoint!==null&&terminalFlowSetpoint>0){
+      const delivered=terminalFlow/terminalFlowSetpoint*100;
+      r.push({label:"Terminal airflow delivery",value:`${fmt(delivered)}% of setpoint`,state:delivered<80?"high":delivered<95?"caution":"normal",
+        note:delivered<95?"Check CAV/VAV damper command and position, primary-air inlet pressure, airflow sensor and pickup, actuator/linkage, and downstream restriction.":"Measured terminal airflow is close to or above the entered setpoint."});
+    }
+    const damperCommand=n(values.terminalDamperCommand),damperPosition=n(values.terminalDamperPosition);
+    if(damperCommand!==null&&damperPosition!==null){
+      const error=Math.abs(damperCommand-damperPosition);
+      r.push({label:"Terminal damper tracking error",value:`${fmt(error)} percentage points`,state:error>20?"high":error>10?"caution":"normal",
+        note:error>10?"Command and position differ. Verify whether position is true feedback, then inspect the actuator, linkage, controls, and damper movement.":"Entered command and position are tracking reasonably closely."});
+    }
   }
   if(profile==="dehumidifier"){
     const er=n(values.enteringRh),lr=n(values.leavingRh);
