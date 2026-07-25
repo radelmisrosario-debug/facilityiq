@@ -14,6 +14,9 @@ valves. Heating valves are normally open and cooling valves are normally closed,
 so loss of control air is treated as a possible simultaneous-heating and
 loss-of-cooling condition.
 
+Room 503 is excluded from the AHU-02 room list. It is mapped to the dedicated
+Bry-Air dehumidifier and 503 Aircon Tech chiller system instead.
+
 V08 introduces a dedicated home screen with three clear starting points:
 
 - Troubleshoot an individual asset

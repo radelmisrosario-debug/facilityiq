@@ -24,12 +24,26 @@ const facilityIqChat = (() => {
   function chooseProblem(asset,problem){state.asset=asset;state.problem=problem;state.stepId=problem.startStep;save();presentStep()}
   function roomComfortRequest(query){
     const roomMatch=query.match(/\broom\s*#?\s*([0-9]{3}[a-z]?)\b/i);
-    const comfortMatch=query.match(/\b(too\s+hot|hot|warm|too\s+cold|cold|freezing|temperature|temp|uncomfortable)\b/i);
+    const comfortMatch=query.match(/\b(too\s+hot|hot|warm|too\s+cold|cold|freezing|temperature|temp|uncomfortable|too\s+humid|humid|humidity)\b/i);
     if(!roomMatch||!comfortMatch)return null;
-    const room=roomMatch[1].toUpperCase(),condition=/cold|freezing/i.test(comfortMatch[1])?"cold":/hot|warm/i.test(comfortMatch[1])?"hot":"temperature concern";
-    return {room,condition,ahus:facilityIqAhusForRoom(room)};
+    const room=roomMatch[1].toUpperCase(),condition=/humid/i.test(comfortMatch[1])?"humid":/cold|freezing/i.test(comfortMatch[1])?"cold":/hot|warm/i.test(comfortMatch[1])?"hot":"temperature concern";
+    return {room,condition,ahus:facilityIqAhusForRoom(room),dedicatedEquipment:facilityIqDedicatedEquipmentForRoom(room)};
   }
   function handleRoomComfort(request){
+    if(request.dedicatedEquipment.length){
+      const dehumidifier=request.dedicatedEquipment.find(asset=>asset.id==="Bry-Air-DEHU");
+      const chiller=request.dedicatedEquipment.find(asset=>asset.id==="503-Aircon-Tech-Chiller");
+      const issue=request.condition==="humid"?"a humidity complaint":`a ${request.condition} condition`;
+      return message("assistant",`Room ${request.room} has ${issue}. It is not assigned to AHU-02. This room is served by the dedicated Bry-Air dehumidifier and 503 Aircon Tech chiller cooling loop.\n\nCheck the Bry-Air operating status, humidity setpoint and measured humidity, process and reactivation airflow, rotor operation, and reactivation heat. Then verify the 503 chiller is enabled, leaving-water temperature is at its approved setpoint, and dedicated-loop flow and cooling-valve position are available.`,{
+        eyebrow:"Dedicated Room 503 system",
+        actions:[
+          ...(dehumidifier?[{label:"Open Bry-Air dehumidifier",action:"asset-page",value:dehumidifier.id}]:[]),
+          ...(request.condition==="humid"&&dehumidifier?[{label:"Start high-humidity checks",action:"problem",value:`${dehumidifier.id}|high-humidity`}]:[]),
+          ...(chiller?[{label:"Open 503 chiller",action:"asset-page",value:chiller.id}]:[]),
+          {label:"Open dedicated system",action:"system-page",value:"processCooling"}
+        ]
+      });
+    }
     if(!request.ahus.length)return message("assistant",`I don’t have a serving AHU assignment for Room ${request.room} yet. Verify the room number, then browse the equipment list or ask your controls operator.`,{eyebrow:"Room lookup",actions:[{label:"Browse equipment",action:"browse"}]});
     const names=request.ahus.map(asset=>asset.id).join(" and ");
     const conditionText=request.condition==="temperature concern"?"has a temperature concern":`is too ${request.condition}`;
@@ -68,6 +82,7 @@ const facilityIqChat = (() => {
     if(action==="asset"){const asset=assets[value];if(!asset)return;state.asset=asset;state.problem=null;message("user",`${asset.id} · ${asset.name}`);return message("assistant",`What problem are you seeing on ${asset.id}?`,{actions:problemActions(asset)})}
     if(action==="problem"){const [assetId,problemId]=value.split("|"),asset=assets[assetId],problem=asset?.problems.find(p=>p.id===problemId);if(!problem)return;message("user",problem.name);return chooseProblem(asset,problem)}
     if(action==="asset-page"){toggle(false);return setRoute({asset:value})}
+    if(action==="system-page"){toggle(false);return setRoute({system:value})}
     if(action==="guide"){toggle(false);clearSession(state.asset.id,state.problem.id);return setRoute({asset:state.asset.id,problem:state.problem.id,step:state.problem.startStep})}
     if(action==="manual"&&state.asset?.manual)window.open(state.asset.manual,"_blank","noopener");
   }
