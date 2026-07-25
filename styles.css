@@ -201,3 +201,33 @@ h1,h2,h3,p{margin-top:0}
   .chat-launcher{right:14px;bottom:14px}
   .chat-panel{right:0;bottom:0;width:100vw;height:100dvh;max-height:none;border:0;border-radius:0}
 }
+
+/* FacilityIQ V08 main launch page */
+.launch-hero{max-width:680px;padding:42px 4px 12px}
+.launch-hero h2{margin:8px 0 12px;font-size:clamp(2rem,5vw,3.35rem);line-height:1.05;letter-spacing:-.035em;color:#153747}
+.launch-hero p{max-width:620px;color:#526570;font-size:1.08rem;line-height:1.65}
+.launch-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:22px 0}
+.launch-card{position:relative;min-height:285px;border:1px solid #cbd7de;border-radius:18px;padding:24px;background:#fff;color:#17212b;text-align:left;cursor:pointer;overflow:hidden;transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}
+.launch-card:before{content:"";position:absolute;inset:0 0 auto;height:5px;background:#3c7188}
+.launch-card:hover,.launch-card:focus-visible{transform:translateY(-3px);border-color:#628596;box-shadow:0 14px 30px rgba(26,55,68,.13);outline:none}
+.launch-card.assistant-launch{grid-column:1/-1;min-height:230px;background:#173f52;color:#fff}
+.launch-card.assistant-launch:before{background:#85d3b1}
+.launch-number{position:absolute;right:22px;top:19px;color:#aab8bf;font-size:2.35rem;font-weight:900;letter-spacing:-.06em}
+.assistant-launch .launch-number{color:rgba(255,255,255,.22)}
+.launch-type{display:block;margin:6px 0 32px;color:#547181;font-size:.68rem;font-weight:900;letter-spacing:.13em}
+.assistant-launch .launch-type{color:#91d9ba}
+.launch-card h2{max-width:390px;margin-bottom:10px;font-size:1.55rem;line-height:1.18}
+.launch-card p{max-width:650px;margin-bottom:30px;color:#586a74;line-height:1.55}
+.assistant-launch p{color:#d3e0e5}
+.launch-link{position:absolute;left:24px;bottom:22px;color:#1f5c75;font-weight:900}
+.assistant-launch .launch-link{color:#9ce3c5}
+.launch-link b{display:inline-block;margin-left:5px;transition:transform .16s ease}.launch-card:hover .launch-link b{transform:translateX(4px)}
+.launch-safety{margin:24px 2px 8px;padding:14px 16px;border-radius:10px;background:#f2f5f6;color:#5f6f77;font-size:.84rem;line-height:1.45}
+.section-intro{margin-top:24px}.section-intro h2{margin:6px 0 8px}.section-intro p{color:#596a74}
+@media(max-width:650px){
+  .launch-hero{padding-top:30px}
+  .launch-grid{grid-template-columns:1fr}
+  .launch-card,.launch-card.assistant-launch{grid-column:auto;min-height:260px;padding:20px}
+  .launch-card h2{font-size:1.35rem}
+  .launch-link{left:20px}
+}

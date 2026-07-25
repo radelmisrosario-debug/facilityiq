@@ -2,15 +2,48 @@ const app=document.getElementById("app");
 const pageTitle=document.getElementById("page-title");
 const homeButton=document.getElementById("home-button");
 
-function getRoute(){const p=new URLSearchParams(location.search);return{system:p.get("system"),asset:p.get("asset"),problem:p.get("problem"),step:p.get("step")}}
+function getRoute(){const p=new URLSearchParams(location.search);return{view:p.get("view"),system:p.get("system"),asset:p.get("asset"),problem:p.get("problem"),step:p.get("step")}}
 function setRoute(params){const u=new URL(location.href);u.search="";Object.entries(params).forEach(([k,v])=>{if(v)u.searchParams.set(k,v)});history.pushState({},"",u);render();window.scrollTo({top:0,behavior:"smooth"})}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
 
 function renderHome(){
-  pageTitle.textContent="Troubleshooting Engine";
+  pageTitle.textContent="How can FacilityIQ help?";
   homeButton.hidden=true;
-  app.innerHTML=`<div class="home-actions"><button id="systems-button" class="primary-button">Open Plant Systems</button></div><div class="toolbar"><input id="search" class="search" placeholder="Search asset, room, model, alarm, or symptom..." /></div><div id="asset-grid" class="card-grid"></div>`;
-  document.getElementById("systems-button").onclick=()=>renderSystemsHome();
+  app.innerHTML=`<section class="launch-hero">
+    <span class="status">FACILITY TROUBLESHOOTING</span>
+    <h2>Choose where you want to start</h2>
+    <p>Select an individual asset, review the connected plant system, or describe the issue to the FacilityIQ assistant.</p>
+  </section>
+  <div class="launch-grid">
+    <button class="launch-card asset-launch" id="assets-button">
+      <span class="launch-number">01</span><span class="launch-type">EQUIPMENT</span>
+      <h2>Troubleshoot an Asset</h2>
+      <p>Find a specific chiller, pump, AHU, boiler, UPS, fan, compressor, or other asset and follow its diagnostic guide.</p>
+      <span class="launch-link">Browse assets <b>→</b></span>
+    </button>
+    <button class="launch-card system-launch" id="systems-button">
+      <span class="launch-number">02</span><span class="launch-type">PLANT OVERVIEW</span>
+      <h2>Troubleshoot the Plant System</h2>
+      <p>Trace equipment relationships, review flow paths, and work through system-level symptoms and checks.</p>
+      <span class="launch-link">Open plant systems <b>→</b></span>
+    </button>
+    <button class="launch-card assistant-launch" id="assistant-button">
+      <span class="launch-number">03</span><span class="launch-type">GUIDED ASSISTANT</span>
+      <h2>Ask FacilityIQ</h2>
+      <p>Describe what the equipment is doing in your own words. FacilityIQ will match the asset and guide the next checks.</p>
+      <span class="launch-link">Start a conversation <b>→</b></span>
+    </button>
+  </div>
+  <p class="launch-safety"><strong>Work safely.</strong> FacilityIQ supports trained personnel and does not replace LOTO, permits, site procedures, or manufacturer instructions.</p>`;
+  document.getElementById("assets-button").onclick=()=>setRoute({view:"assets"});
+  document.getElementById("systems-button").onclick=()=>setRoute({view:"systems"});
+  document.getElementById("assistant-button").onclick=()=>facilityIqChat.toggle(true);
+}
+
+function renderAssetsHome(){
+  pageTitle.textContent="Asset Troubleshooting";
+  homeButton.hidden=false;
+  app.innerHTML=`<div class="section-intro"><span class="status">EQUIPMENT</span><h2>Select the asset you want to troubleshoot</h2><p>Search by tag, equipment name, room, model, alarm, or symptom.</p></div><div class="toolbar"><input id="search" class="search" placeholder="Search asset, room, model, alarm, or symptom..." /></div><div id="asset-grid" class="card-grid"></div>`;
   const input=document.getElementById("search");
   const grid=document.getElementById("asset-grid");
   function draw(){
@@ -68,7 +101,7 @@ function renderStep(asset,problem,stepId){
   }
 }
 function render(){
-  const r=getRoute();if(r.system){const s=facilitySystems[r.system];return s?renderSystem(s):renderSystemsHome();}if(!r.asset)return renderHome();
+  const r=getRoute();if(r.system){const s=facilitySystems[r.system];return s?renderSystem(s):renderSystemsHome();}if(r.view==="systems")return renderSystemsHome();if(r.view==="assets")return renderAssetsHome();if(!r.asset)return renderHome();
   const a=assets[r.asset];if(!a)return renderHome();
   if(!r.problem||!r.step)return renderAsset(a);
   const p=a.problems.find(x=>x.id===r.problem);if(!p)return renderAsset(a);

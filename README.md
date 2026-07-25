@@ -1,4 +1,10 @@
-# FacilityIQ V07 - Troubleshooting Assistant
+# FacilityIQ V08 - Main Launch Page
+
+V08 introduces a dedicated home screen with three clear starting points:
+
+- Troubleshoot an individual asset
+- Troubleshoot the connected plant system
+- Ask FacilityIQ in a guided conversation
 
 V07 adds an on-device conversational assistant that correlates a technician's
 question with the equipment catalog, symptoms, locations, models, manuals, and

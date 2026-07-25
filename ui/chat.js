@@ -43,7 +43,7 @@ const facilityIqChat = (() => {
     if(action==="answer"){const step=steps[state.stepId];if(!step||step.type!=="question")return;message("user",value==="yes"?"Yes":"No");state.stepId=step[value];save();return presentStep()}
     if(action==="unsure"){const step=steps[state.stepId];return message("assistant",`Verify this condition before continuing: ${step.text} I won’t assume an answer because it could send the diagnosis down the wrong path.`,{safety:step.safety,actions:[{label:"Yes",action:"answer",value:"yes"},{label:"No",action:"answer",value:"no"}]})}
     if(action==="reset")return reset();
-    if(action==="browse"){toggle(false);setRoute({});return document.getElementById("search")?.focus()}
+    if(action==="browse"){toggle(false);setRoute({view:"assets"});return document.getElementById("search")?.focus()}
     if(action==="asset"){const asset=assets[value];if(!asset)return;state.asset=asset;state.problem=null;message("user",`${asset.id} · ${asset.name}`);return message("assistant",`What problem are you seeing on ${asset.id}?`,{actions:problemActions(asset)})}
     if(action==="problem"){const [assetId,problemId]=value.split("|"),asset=assets[assetId],problem=asset?.problems.find(p=>p.id===problemId);if(!problem)return;message("user",problem.name);return chooseProblem(asset,problem)}
     if(action==="asset-page"){toggle(false);return setRoute({asset:value})}
