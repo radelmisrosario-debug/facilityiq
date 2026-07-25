@@ -156,6 +156,29 @@ function fiqFriendlyEvidence(profile,item){
   return `Verify: ${label}`;
 }
 
+function fiqOperatingModes(profile){
+  const modes={
+    ahu:["Cooling call","Heating call","Occupied ventilation","Unoccupied","Startup","Stopped","Unknown"],
+    chiller:["Enabled — cooling","Running under load","Startup","Standby","Stopped on alarm","Unknown"],
+    hydronic:["Running — lead","Running — lag","Manual operation","Startup","Commanded off","Stopped on fault","Unknown"],
+    airCompressor:["Loaded","Unloaded","Pressure satisfied / standby","Startup","Stopped on fault","Unknown"],
+    dehumidifier:["Dehumidification enabled","Running under moisture load","Startup","Standby","Stopped on alarm","Unknown"],
+    fan:["Commanded on","Running","Startup","Commanded off","Stopped on fault","Unknown"],
+    boiler:["Call for heat","Ignition sequence","Firing","Setpoint satisfied / standby","Stopped on limit or fault","Unknown"],
+    ups:["Normal online","On battery","Static bypass","Maintenance bypass","Battery test","Startup / transfer","Unknown"],
+    vacuum:["Operating under load","Isolated pump test","Startup / warm-up","Standby","Stopped on protection","Unknown"],
+    dryer:["Air flowing through dryer","No air demand","Refrigeration running","Startup","Bypass selected","Stopped on fault","Unknown"],
+    generator:["Standby / automatic","Remote start received","Cranking","Running unloaded","Running under load","Cooldown","Shutdown / fault","Unknown"]
+  };
+  return modes[profile]||["Running","Startup","Standby","Stopped","Unknown"];
+}
+
+function fiqOperatingModeOptions(profile,savedMode){
+  const modes=fiqOperatingModes(profile);
+  const selected=modes.includes(savedMode)?savedMode:"Unknown";
+  return modes.map(mode=>`<option${mode===selected?" selected":""}>${esc(mode)}</option>`).join("");
+}
+
 function fiqQualityMarkup(profile,quality,contradictions){
   const level=quality.completeness>=65?"strong":quality.completeness>=35?"moderate":"limited";
   return `<section class="quality-panel ${level}">
@@ -206,7 +229,7 @@ function renderDiagnosticPanel(asset){
     <div class="diagnostic-heading"><div><span class="status">V05 EVIDENCE ENGINE</span><h3>Diagnostic Coverage and Evidence Quality</h3>
     <p class="meta">Choose a supported symptom, enter measured values, and classify each field observation as Yes, No, or Unknown.</p></div></div>
     ${problemOptions?`<label class="diagnosis-select"><span>Symptom to analyze</span><select id="weighted-problem">${problemOptions}</select></label>`:`<div class="warning">A weighted model has not yet been configured for this asset profile. Engineering calculations remain available.</div>`}
-    <div class="evidence-context"><label><span>Operating condition</span><select id="evidence-mode" data-measure="evidenceMode"><option${saved.evidenceMode==="Cooling call"?" selected":""}>Cooling call</option><option${saved.evidenceMode==="Heating call"?" selected":""}>Heating call</option><option${saved.evidenceMode==="Occupied"?" selected":""}>Occupied</option><option${saved.evidenceMode==="Unoccupied"?" selected":""}>Unoccupied</option><option${saved.evidenceMode==="Startup"?" selected":""}>Startup</option><option${saved.evidenceMode==="Unknown"?" selected":""}>Unknown</option></select></label><label><span>Observation time</span><input id="evidence-time" data-measure="observedAt" type="datetime-local" value="${esc(saved.observedAt||"")}"></label></div>
+    <div class="evidence-context"><label><span>Operating condition</span><select id="evidence-mode" data-measure="evidenceMode">${fiqOperatingModeOptions(profileName,saved.evidenceMode)}</select></label><label><span>Observation time</span><input id="evidence-time" data-measure="observedAt" type="datetime-local" value="${esc(saved.observedAt||"")}"></label></div>
     <div class="measurement-grid">${profile.fields.map(f=>`<label class="measurement-field"><span>${esc(f.label)}</span><div class="input-unit"><input inputmode="decimal" type="${f.type}" step="${f.step}" data-measure="${f.id}" value="${saved[f.id]??""}" placeholder="—"><b>${esc(f.unit)}</b></div></label>`).join("")}${airflowField}${flowField}</div>
     ${problemOptions?`<details class="evidence-box" open><summary>Symptom-specific field observations — Yes / No / Unknown</summary><div id="evidence-grid" class="evidence-grid">${fiqObservationMarkup(profileName,defaultProblem)}</div></details>`:""}
     <div class="button-row diagnostic-actions"><button id="analyze-readings" class="primary-button">Run Diagnostic Analysis</button><button id="clear-readings" class="secondary-button">Clear</button></div>

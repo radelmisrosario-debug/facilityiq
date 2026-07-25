@@ -39,6 +39,10 @@ tree, using each yes/no branch as tri-state field evidence and each terminal
 result as a ranked diagnostic outcome. Primary chilled-water pumps and the
 emergency generator now have diagnostic profiles as well.
 
+Operating-condition choices are equipment-specific. For example, vacuum pumps
+use operating-under-load, isolated-test, warm-up, standby, and protection
+states; cooling and heating calls appear only on relevant HVAC equipment.
+
 V08 introduces a dedicated home screen with three clear starting points:
 
 - Troubleshoot an individual asset
