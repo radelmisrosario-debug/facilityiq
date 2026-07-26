@@ -434,6 +434,7 @@ body{
   grid-column:auto;min-height:275px;border:1px solid var(--fiq-line);border-radius:18px;padding:25px;
   background:#fff;color:var(--fiq-ink);box-shadow:0 10px 30px rgba(31,45,65,.07);
 }
+.launch-number{display:none}
 .launch-card:before{inset:0 auto 0 0;width:5px;height:auto;background:var(--fiq-cyan)}
 .launch-card.system-launch:before{background:var(--fiq-green)}
 .launch-card.manual-launch:before{background:var(--fiq-navy)}
