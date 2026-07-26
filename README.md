@@ -55,12 +55,13 @@ EF-27/28 serve Labs 450 and 460; and EF-30/31 serve the Bio-side laboratories.
 The assistant separates pair-wide fan/static/duct problems from local hood,
 sink, controller, branch-damper, and branch-duct problems.
 
-The main page also includes a searchable Facility Operations Manual compiled
-from the supplied final manual, draft prompts, and topics document. It covers
+The main page also includes a searchable, category-filtered Facility Operations
+Manual with a quick table of contents. It covers
 Desigo, AHUs, CAV/VAV controls, chilled and hot water, laboratory exhaust and
 fume hoods, Room 503, compressed air, emergency power, RTUs, life-safety
 systems, access control, preventive-maintenance intervals, and field-verification
-items. The original source documents are available from the manual page.
+items. Source-document downloads are intentionally kept off the manual page so
+operators can focus on concise facility guidance.
 
 The MaintainX CSV expansion registers 16 tagged RTUs, two Mitsubishi server-room
 mini-splits, the Room 258 Liebert precision-cooling unit, and the complete
