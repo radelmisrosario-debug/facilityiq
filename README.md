@@ -47,6 +47,13 @@ states; cooling and heating calls appear only on relevant HVAC equipment.
 Room and laboratory comfort troubleshooting includes both too-hot and too-cold
 paths. The cold-space guide checks Desigo heating demand, the dedicated CAV/VAV
 airflow and VAV heating-valve command, physical position, and temperature rise,
+
+Laboratory exhaust is modeled as five paired systems sharing common ductwork:
+EF-10/11 serve the fume hoods in Labs 400 and 505; EF-21/22 serve Labs 430 and
+440; EF-25/26 serve the fume hoods in Labs 415 and 420 plus the sink in Lab 414;
+EF-27/28 serve Labs 450 and 460; and EF-30/31 serve the Bio-side laboratories.
+The assistant separates pair-wide fan/static/duct problems from local hood,
+sink, controller, branch-damper, and branch-duct problems.
 AHU sequence, hot-water setpoint and availability, control air, heating/cooling
 valve positions, and heating-coil performance.
 

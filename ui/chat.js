@@ -45,6 +45,27 @@ const facilityIqChat = (() => {
     const room=roomMatch[1].toUpperCase(),condition=/humid/i.test(comfortMatch[1])?"humid":/cold|freezing/i.test(comfortMatch[1])?"cold":/hot|warm/i.test(comfortMatch[1])?"hot":"temperature concern";
     return {room,condition,terminal:facilityIqTerminalForRoom(room),ahus:facilityIqAhusForRoom(room),dedicatedEquipment:facilityIqDedicatedEquipmentForRoom(room)};
   }
+  function laboratoryExhaustRequest(query){
+    if(!/\b(fume\s*hood|hood|exhaust|face\s*velocity|sink)\b/i.test(query))return null;
+    const roomMatch=query.match(/\b(?:room|lab|laboratory)\s*#?\s*([0-9]{3}[a-z]?)\b/i);
+    const bioSide=/\bbio[\s-]*side\b/i.test(query);
+    const systems=roomMatch?facilityIqExhaustSystemsForRoom(roomMatch[1]):bioSide?[facilityIqExhaustSystems["BIO-EXHAUST"]]:[];
+    return systems.length?{room:roomMatch?.[1].toUpperCase()||null,bioSide,systems}:null;
+  }
+  function handleLaboratoryExhaust(request){
+    const system=request.systems[0],fans=system.fans.map(id=>assets[id]).filter(Boolean);
+    const area=request.room?`Lab ${request.room}`:"the Bio-side";
+    return message("assistant",`${area} is connected to ${system.name}. ${system.fans.join(" and ")} work together on the same ductwork system.\n\nFirst, treat a fume-hood exhaust alarm or inadequate capture as a laboratory safety condition and follow the site’s hood-outage procedure. Check both fans—not just one—for enable, run proof, VFD speed, current, fault, rotation, and disconnect status. Then compare common duct static pressure with setpoint.\n\nIf every connected hood or exhaust point is affected, investigate the paired fans, shared controls, static-pressure sensor, common dampers, duct/discharge restriction, and laboratory make-up air. If only one point is affected, check that hood, sink pickup, airflow controller, branch damper, sensor, sash, and branch duct while confirming common static remains normal.`,{
+      eyebrow:"Paired laboratory exhaust",
+      detail:system.loads.join("\n"),
+      safety:"Do not use a hood with inadequate verified capture or access contaminated exhaust ductwork without the required controls, PPE, and site authorization.",
+      actions:[
+        ...fans.map(fan=>({label:`Open ${fan.id}`,action:"asset-page",value:fan.id})),
+        ...fans.map(fan=>({label:`Start ${fan.id} low-exhaust checks`,action:"problem",value:`${fan.id}|low-airflow`})),
+        {label:"Open laboratory exhaust system",action:"system-page",value:"laboratoryExhaust"}
+      ]
+    });
+  }
   function handleRoomComfort(request){
     if(request.dedicatedEquipment.length){
       const dehumidifier=request.dedicatedEquipment.find(asset=>asset.id==="Bry-Air-DEHU");
@@ -83,6 +104,7 @@ const facilityIqChat = (() => {
   }
   function submit(raw){
     const query=raw.trim();if(!query)return;message("user",query);
+    const exhaustRequest=laboratoryExhaustRequest(query);if(exhaustRequest)return handleLaboratoryExhaust(exhaustRequest);
     const roomRequest=roomComfortRequest(query);if(roomRequest)return handleRoomComfort(roomRequest);
     const equipment=assetMatches(query), current=state.asset?problemMatches(query,state.asset):[], issues=globalProblemMatches(query);
     if(state.asset&&current[0]?.score>=4)return message("assistant",`That sounds closest to “${current[0].problem.name}” for ${state.asset.id}. I’ll begin with a safe first check.`,{actions:[{label:"Start checks",action:"problem",value:`${state.asset.id}|${current[0].problem.id}`}]});

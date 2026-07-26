@@ -88,7 +88,10 @@ const diagnosticProfiles = {
       {id:"motorAmps",label:"Motor operating current",unit:"A",type:"number",step:"0.1"},
       {id:"motorFla",label:"Motor nameplate FLA",unit:"A",type:"number",step:"0.1"},
       {id:"vibration",label:"Overall vibration",unit:"in/s",type:"number",step:"0.001"},
-      {id:"airflow",label:"Measured airflow",unit:"CFM",type:"number",step:"1"}
+      {id:"airflow",label:"Measured airflow",unit:"CFM",type:"number",step:"1"},
+      {id:"ductStaticPressure",label:"Shared-duct static pressure",unit:"in. w.c.",type:"number",step:"0.01"},
+      {id:"ductStaticSetpoint",label:"Shared-duct static setpoint",unit:"in. w.c.",type:"number",step:"0.01"},
+      {id:"hoodFaceVelocity",label:"Affected hood face velocity",unit:"FPM",type:"number",step:"1"}
     ]
   },
   boiler: {

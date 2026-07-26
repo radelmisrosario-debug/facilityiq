@@ -96,5 +96,45 @@ const facilitySystems={
       {name:"Low laboratory air pressure",checks:["Check laboratory header pressure and demand.","Verify the enabled House Air Compressor status, cut-in/cut-out operation, receiver pressure, and capacity.","Inspect open drains, large users, regulators, isolation valves, and distribution leaks.","Do not troubleshoot Control-AC for a laboratory compressed-air pressure complaint."]},
       {name:"One laboratory has low air pressure",checks:["Compare local lab pressure with the main laboratory air header.","Check the local isolation valve, regulator, filter, hose, branch piping, and connected demand.","If header pressure is also low, continue at the House Air Compressors."]}
     ]
+  },
+  laboratoryExhaust:{
+    id:"laboratoryExhaust",name:"Paired Laboratory Exhaust Systems",description:"Paired roof exhaust fans serving shared fume-hood and laboratory exhaust duct systems.",
+    notes:[
+      "EF-10 and EF-11 serve all fume hoods in Labs 400 and 505.",
+      "EF-21 and EF-22 serve all fume hoods in Labs 430 and 440.",
+      "EF-25 and EF-26 serve all fume hoods in Labs 415 and 420 plus the sink exhaust in Lab 414.",
+      "EF-27 and EF-28 serve all fume hoods in Labs 450 and 460.",
+      "EF-30 and EF-31 serve all Bio-side laboratory fume hoods and laboratory exhaust points.",
+      "Each pair shares ductwork; assess both fans and the common duct before isolating the complaint to one fan."
+    ],
+    nodes:[
+      {id:"EF-10",label:"EF-10",sub:"Paired with EF-11",type:"fan",asset:"EF-10",x:12,y:12},
+      {id:"EF-11",label:"EF-11",sub:"Paired with EF-10",type:"fan",asset:"EF-11",x:30,y:12},
+      {id:"EXH-400-505",label:"Labs 400 / 505",sub:"All fume hoods",type:"load",x:21,y:30},
+      {id:"EF-21",label:"EF-21",sub:"Paired with EF-22",type:"fan",asset:"EF-21",x:42,y:12},
+      {id:"EF-22",label:"EF-22",sub:"Paired with EF-21",type:"fan",asset:"EF-22",x:60,y:12},
+      {id:"EXH-430-440",label:"Labs 430 / 440",sub:"All fume hoods",type:"load",x:51,y:30},
+      {id:"EF-25",label:"EF-25",sub:"Paired with EF-26",type:"fan",asset:"EF-25",x:72,y:12},
+      {id:"EF-26",label:"EF-26",sub:"Paired with EF-25",type:"fan",asset:"EF-26",x:90,y:12},
+      {id:"EXH-414-420",label:"Labs 414 / 415 / 420",sub:"Fume hoods + Lab 414 sink",type:"load",x:81,y:30},
+      {id:"EF-27",label:"EF-27",sub:"Paired with EF-28",type:"fan",asset:"EF-27",x:27,y:58},
+      {id:"EF-28",label:"EF-28",sub:"Paired with EF-27",type:"fan",asset:"EF-28",x:45,y:58},
+      {id:"EXH-450-460",label:"Labs 450 / 460",sub:"All fume hoods",type:"load",x:36,y:78},
+      {id:"EF-30",label:"EF-30",sub:"Paired with EF-31",type:"fan",asset:"EF-30",x:57,y:58},
+      {id:"EF-31",label:"EF-31",sub:"Paired with EF-30",type:"fan",asset:"EF-31",x:75,y:58},
+      {id:"EXH-BIO",label:"Bio-side",sub:"All laboratory fume hoods and exhaust",type:"load",x:66,y:78}
+    ],
+    links:[
+      ["EXH-400-505","EF-10"],["EXH-400-505","EF-11"],
+      ["EXH-430-440","EF-21"],["EXH-430-440","EF-22"],
+      ["EXH-414-420","EF-25"],["EXH-414-420","EF-26"],
+      ["EXH-450-460","EF-27"],["EXH-450-460","EF-28"],
+      ["EXH-BIO","EF-30"],["EXH-BIO","EF-31"]
+    ],
+    commonSymptoms:[
+      {name:"One fan in a pair is not running",checks:["Treat the pair as one exhaust system and check both fans’ commands, proof, speed, current, and faults.","Verify the shared enable, lead/lag or parallel sequence, permissives, emergency interlocks, and each fan’s disconnect.","Do not assume one running fan maintains safe hood capture; verify common duct static, hood alarms, face velocity, and laboratory pressure."]},
+      {name:"All hoods on one pair have low exhaust",checks:["Confirm both paired fans are proven at the expected speed and rotation.","Compare common duct static pressure with setpoint and verify the sensor.","Inspect both wheels, common dampers, shared duct and discharge for restriction or recirculation.","Check laboratory make-up air and simultaneous hood demand, then verify representative hood performance."]},
+      {name:"Only one hood, sink, or branch has low exhaust",checks:["Compare the affected point with another point on the same fan pair.","Check the local hood sash, alarm, airflow controller, branch damper, sensor, grille or sink pickup, and branch duct.","Confirm common duct static remains normal while evaluating the local branch."]}
+    ]
   }
 };
