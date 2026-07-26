@@ -414,6 +414,9 @@ ${result.cause}
 Recommended action:
 ${result.action}
 
+Parts planning:
+${typeof facilityIqReplacementPartSummary==="function"?facilityIqReplacementPartSummary(asset,result):"Parts planning is unavailable."}
+
 Diagnostic ratings:
 ${ratings}
 

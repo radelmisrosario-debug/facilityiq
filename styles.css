@@ -43,6 +43,10 @@ h1,h2,h3,p{margin-top:0}
 .question-reference{margin-top:16px;border:1px solid #d7e0e5;border-radius:11px;background:#fff}
 .question-reference>summary{padding:13px 15px;cursor:pointer;font-weight:800;color:#284f62}
 .question-reference .manual-context{margin:0;border:0;border-top:1px solid #e0e7eb;border-radius:0 0 11px 11px}
+.parts-planning{margin-top:20px;padding:17px;border:1px solid #d9cba8;border-left:5px solid #a96d14;border-radius:13px;background:#fffaf0}
+.parts-planning h3{margin:0 0 10px}.parts-planning p{margin-bottom:10px}.parts-planning ul{margin:14px 0 0;padding-left:21px}
+.parts-planning li{margin:7px 0;line-height:1.45}.parts-actions{display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+.parts-actions a{margin:0}.parts-link{display:inline-block;text-decoration:none}
 @media(max-width:560px){.asset-card-actions{grid-template-columns:1fr}.manual-context-head{align-items:flex-start;flex-direction:column}.compact-manual-button{white-space:normal}}
 @media(max-width:560px){.app-shell{padding:14px}.button-row{grid-template-columns:1fr}.card-grid{grid-template-columns:1fr}}
 

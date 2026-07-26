@@ -65,3 +65,48 @@ function facilityIqManualContextMarkup(asset,title="Manual and facility repair c
   const note=asset.manualNote?`<p class="small-note">${esc(asset.manualNote)}</p>`:"";
   return `<section class="manual-context"><div class="manual-context-head"><div><span class="card-kicker">MANUAL-BACKED REFERENCE</span><h3>${esc(title)}</h3></div>${link}</div>${note}<ul>${facilityIqManualGuidance(asset).map(item=>`<li>${esc(item)}</li>`).join("")}</ul></section>`;
 }
+
+const facilityIqReplacementComponents=[
+  ["compressor",/\bcompressor\b/i],["heat exchanger",/\bheat exchanger\b/i],["control board",/\b(control board|controller|circuit board|pcb)\b/i],
+  ["flame sensor",/\bflame sensor\b/i],["igniter",/\b(igniter|ignition electrode|spark electrode)\b/i],["gas valve",/\bgas valve\b/i],
+  ["pressure switch",/\bpressure switch\b/i],["flow switch",/\bflow switch\b/i],["temperature sensor",/\b(temperature sensor|thermistor|temperature probe)\b/i],
+  ["pressure sensor",/\b(pressure sensor|pressure transducer)\b/i],["actuator",/\bactuator\b/i],["control valve",/\b(control valve|cooling valve|heating valve)\b/i],
+  ["contactor",/\bcontactor\b/i],["overload",/\boverload\b/i],["fuse",/\bfuse\b/i],["battery",/\bbatter(y|ies)\b/i],
+  ["motor",/\bmotor\b/i],["VFD",/\b(vfd|variable frequency drive)\b/i],["fan wheel",/\b(fan wheel|blower wheel|impeller|propeller)\b/i],
+  ["bearing",/\bbearing\b/i],["belt",/\b(belt|belts)\b/i],["filter",/\b(filter|filters)\b/i],["drain valve",/\b(drain valve|automatic drain|condensate drain)\b/i],
+  ["pump",/\bpump\b/i],["damper",/\bdamper\b/i],["relay",/\brelay\b/i]
+];
+
+function facilityIqReplacementPart(asset,result){
+  const text=`${result?.title||""} ${result?.cause||""} ${result?.action||""}`;
+  if(!/\b(replace|replacement|failed|burned|open winding|shorted|seized|broken|worn|damaged)\b/i.test(text))return null;
+  const component=facilityIqReplacementComponents.find(([,pattern])=>pattern.test(text))?.[0];
+  if(!component)return null;
+  const exactPart=asset.parts?.[component]||null;
+  const query=[asset.manufacturer,asset.model,asset.serialNumber,component,"replacement part"].filter(Boolean).join(" ");
+  const officialLookup=String(asset.manufacturer||"").toLowerCase().includes("greenheck")?"https://www.greenheck.com/shop/parts":
+    String(asset.manufacturer||"").toLowerCase().includes("trane")?"https://www.trane.com/commercial/north-america/us/en/parts-supplies.html":
+    String(asset.manufacturer||"").toLowerCase().includes("mitsubishi")?"https://www.mitsubishitechinfo.ca/":null;
+  return {
+    component,
+    exactPart,
+    searchUrl:`https://www.google.com/search?q=${encodeURIComponent(query)}`,
+    officialLookup,
+    query
+  };
+}
+
+function facilityIqReplacementPartMarkup(asset,result){
+  const part=facilityIqReplacementPart(asset,result);
+  if(!part)return "";
+  return `<section class="parts-planning"><span class="card-kicker">PARTS PLANNING</span><h3>Candidate replacement: ${esc(part.component)}</h3><p><strong>Search specification:</strong> ${esc(part.query)}</p>${part.exactPart?`<p><strong>Verified catalog part:</strong> ${esc(part.exactPart.partNumber)}</p><a class="manual-button" href="${esc(part.exactPart.url)}" target="_blank" rel="noopener">Open exact part</a>`:`<p class="small-note">No exact part number is recorded in FacilityIQ. Use the links to identify the OEM part, then verify it against the installed component before ordering.</p><div class="parts-actions"><a class="manual-button" href="${esc(part.searchUrl)}" target="_blank" rel="noopener">Search this part specification</a>${part.officialLookup?`<a class="secondary-button parts-link" href="${esc(part.officialLookup)}" target="_blank" rel="noopener">Open OEM parts lookup</a>`:""}${asset.manual?`<a class="secondary-button parts-link" href="${esc(asset.manual)}" target="_blank" rel="noopener">Check parts in manual</a>`:""}</div>`}<ul><li>Match the full asset model and serial number.</li><li>Match the removed part number, voltage, phase, ratings, dimensions, connections, rotation, and revision as applicable.</li><li>Confirm supersession and compatibility with the OEM or authorized supplier before purchase.</li></ul></section>`;
+}
+
+function facilityIqReplacementPartSummary(asset,result){
+  const part=facilityIqReplacementPart(asset,result);
+  if(!part)return "No replacement part was specifically indicated by this diagnostic result.";
+  return `Candidate replacement: ${part.component}
+Search specification: ${part.query}
+Part search: ${part.searchUrl}
+${part.officialLookup?`OEM parts lookup: ${part.officialLookup}\n`:""}${asset.manual?`Asset manual: ${new URL(asset.manual,location.href).href}\n`:""}Exact part number: ${part.exactPart?.partNumber||"Not verified — match the installed part, full model, serial number, ratings, connections, and revision before ordering."}`;
+}
