@@ -32,7 +32,21 @@ const facilityIqChat = (() => {
     return asset.problems.map(problem=>({problem,score:score(symptomQuery,`${problem.id} ${problem.name} ${problem.description}`)})).filter(x=>x.score).sort((a,b)=>b.score-a.score);
   }
   function globalProblemMatches(query){return Object.values(assets).flatMap(asset=>problemMatches(query,asset).map(x=>({asset,...x}))).sort((a,b)=>b.score-a.score).slice(0,6)}
-  function manualMatches(query){return facilityOperationsManual.sections.map(section=>({section,score:score(query,[section.title,section.category,section.summary,...section.facts,...section.operations].join(" "))})).filter(x=>x.score).sort((a,b)=>b.score-a.score)}
+  function manualMatches(query){
+    const aliases=[
+      {id:"compressed-air",pattern:/\b(control air|house air|air compressor|compressed air|air dryer|pneumatic)\b/i},
+      {id:"desigo",pattern:/\b(desigo|building automation|bas)\b/i},
+      {id:"space-controls",pattern:/\b(cav|vav|terminal|space control)\b/i},
+      {id:"chilled-water",pattern:/\b(chilled water|chiller|cooling water)\b/i},
+      {id:"hot-water",pattern:/\b(hot water|boiler|heating loop)\b/i},
+      {id:"lab-exhaust",pattern:/\b(lab exhaust|laboratory exhaust|paired fan)\b/i},
+      {id:"fume-hoods",pattern:/\b(fume hood|face velocity|sash)\b/i},
+      {id:"room-503",pattern:/\b(room|lab|laboratory)\s*503\b/i},
+      {id:"generator-ups",pattern:/\b(generator|ups|emergency power)\b/i},
+      {id:"rtu",pattern:/\b(rtu|roof top|rooftop)\b/i}
+    ];
+    return facilityOperationsManual.sections.map(section=>({section,score:score(query,[section.title,section.category,section.summary,...section.facts,...section.operations].join(" "))+aliases.filter(alias=>alias.id===section.id&&alias.pattern.test(query)).length*30})).filter(x=>x.score).sort((a,b)=>b.score-a.score);
+  }
   function save(){try{localStorage.setItem(storageKey,JSON.stringify({messages:state.messages.slice(-40),assetId:state.asset?.id,problemId:state.problem?.id,stepId:state.stepId}))}catch(_){}}
   function restore(){try{const x=JSON.parse(localStorage.getItem(storageKey)||"null");if(!x)return;state.messages=Array.isArray(x.messages)?x.messages:[];state.asset=x.assetId?assets[x.assetId]:null;state.problem=state.asset?.problems.find(p=>p.id===x.problemId)||null;state.stepId=x.stepId||null}catch(_){}}
 
@@ -104,6 +118,42 @@ const facilityIqChat = (() => {
     message("assistant",step.title,{eyebrow:"Likely finding",detail:`Likely cause: ${step.cause}\n\nRecommended action: ${step.action}`,safety:step.safety,actions:[{label:`Open ${state.asset.id} guide`,action:"guide"},...(state.asset.manual?[{label:"Open manual",action:"manual"}]:[]),{label:"Start over",action:"reset"}]});
   }
   function fastRoute(query){
+    const servingRoom=query.match(/\b(?:which|what)\s+(?:ahu|air\s*handler|equipment|system)\s+(?:serves?|supply|supports?)\s+(?:room|lab|laboratory)?\s*#?\s*([0-9]{3}[a-z]?)\b/i)
+      ||query.match(/\b(?:room|lab|laboratory)\s*#?\s*([0-9]{3}[a-z]?).*\b(?:which|what)\s+(?:ahu|air\s*handler|equipment|system)\b/i);
+    if(servingRoom){
+      const room=servingRoom[1].toUpperCase(),ahus=facilityIqAhusForRoom(room),dedicated=facilityIqDedicatedEquipmentForRoom(room),exhaust=facilityIqExhaustSystemsForRoom(room);
+      const facts=[];
+      if(ahus.length)facts.push(`${ahus.map(asset=>asset.id).join(" and ")} supplies Room ${room} through its dedicated CAV/VAV terminal.`);
+      if(dedicated.length)facts.push(`Dedicated equipment: ${dedicated.map(asset=>asset.name).join(" and ")}.`);
+      if(exhaust.length)facts.push(`Laboratory exhaust: ${exhaust.map(system=>`${system.fans.join(" and ")} (${system.name})`).join("; ")}.`);
+      if(!facts.length)facts.push(`No verified serving-equipment assignment is recorded for Room ${room}.`);
+      return message("assistant",facts.join("\n\n"),{
+        eyebrow:"Facility relationship",
+        actions:[
+          ...ahus.map(asset=>({label:`Open ${asset.id}`,action:"asset-page",value:asset.id})),
+          ...dedicated.map(asset=>({label:`Open ${asset.id}`,action:"asset-page",value:asset.id})),
+          ...(exhaust.length?[{label:"Open laboratory exhaust system",action:"system-page",value:"laboratoryExhaust"}]:[])
+        ]
+      });
+    }
+    const partsAsset=/\b(parts?|spares?|inventory)\b/i.test(query)?assetMatches(query)[0]?.asset:null;
+    if(partsAsset){
+      const parts=facilityIqPartsForAsset(partsAsset.id);
+      return message("assistant",parts.length?`${partsAsset.id} has ${parts.length} associated inventory record${parts.length===1?"":"s"}: ${parts.slice(0,5).map(part=>part.name||part.type).join("; ")}${parts.length>5?"; and more.":""}`:`No parts are currently associated with ${partsAsset.id} in the imported facility list.`,{
+        eyebrow:"Facility parts inventory",
+        actions:[{label:`Open ${partsAsset.id} parts and troubleshooting`,action:"asset-page",value:partsAsset.id}]
+      });
+    }
+    const knowledgeQuestion=/\b(how|what|which|where|why|when|sequence|setpoint|relationship|overview|preventive|maintenance|pm)\b/i.test(query);
+    const knowledge=knowledgeQuestion?manualMatches(query)[0]:null;
+    if(knowledge?.score>=6){
+      const section=knowledge.section;
+      return message("assistant",`${section.title}: ${section.summary}\n\n${section.facts.slice(0,3).join("\n")}`,{
+        eyebrow:"Facility Knowledge Base",
+        safety:section.safety,
+        actions:[{label:"Open Facility Knowledge Base",action:"manual-page"}]
+      });
+    }
     const exhaust=laboratoryExhaustRequest(query);
     if(exhaust){
       const system=exhaust.systems[0],area=exhaust.room?`Lab ${exhaust.room}`:"the Bio-side";
@@ -211,7 +261,7 @@ const facilityIqChat = (() => {
     return `<article class="chat-message ${item.role}">${item.eyebrow?`<span>${safe(item.eyebrow)}</span>`:""}<div class="chat-bubble">${body}${item.safety?`<div class="chat-safety"><strong>Safety:</strong> ${safe(item.safety)}</div>`:""}</div>${actions}${examples}</article>`;
   }
   function draw(){const log=document.getElementById("chat-log");if(!log)return;log.innerHTML=state.messages.map(markup).join("");log.scrollTop=log.scrollHeight}
-  function reset(){state.messages=[];state.asset=null;state.problem=null;state.stepId=null;try{localStorage.removeItem(storageKey)}catch(_){}message("assistant","Describe the room or equipment issue. I’ll link you directly to the matching troubleshooting guide.",{eyebrow:"FacilityIQ quick route",examples:["Room 144 is too cold","Boiler 03 is not firing","Lab 400 hood has low exhaust"]})}
+  function reset(){state.messages=[];state.asset=null;state.problem=null;state.stepId=null;try{localStorage.removeItem(storageKey)}catch(_){}message("assistant","Ask a facility question or describe an equipment issue. I’ll answer from the FacilityIQ knowledge base or link you directly to the matching guide.",{eyebrow:"FacilityIQ quick answer",examples:["Which AHU serves 400?","What parts are associated with EF-03?","Room 144 is too cold"]})}
   function toggle(force){state.open=typeof force==="boolean"?force:!state.open;const panel=document.getElementById("chat-panel"),launcher=document.getElementById("chat-launcher");panel.hidden=!state.open;launcher.setAttribute("aria-expanded",String(state.open));launcher.querySelector(".chat-launcher-label").textContent=state.open?"Close":"Ask FacilityIQ";if(state.open){draw();setTimeout(()=>document.getElementById("chat-input")?.focus(),0)}}
   function mount(){
     document.body.insertAdjacentHTML("beforeend",`<button id="chat-launcher" class="chat-launcher" type="button" aria-controls="chat-panel" aria-expanded="false"><span class="chat-launcher-icon" aria-hidden="true">?</span><span class="chat-launcher-label">Ask FacilityIQ</span></button><section id="chat-panel" class="chat-panel" aria-label="FacilityIQ troubleshooting assistant" hidden><header class="chat-header"><div><span>ONLINE · ON-DEVICE</span><h2>Troubleshooting Assistant</h2></div><div class="chat-header-actions"><button id="chat-reset" type="button">New</button><button id="chat-close" type="button" aria-label="Close assistant">×</button></div></header><div id="chat-log" class="chat-log" role="log" aria-live="polite"></div><form id="chat-form" class="chat-form"><label for="chat-input">Describe the equipment issue</label><div><textarea id="chat-input" rows="2" placeholder="Example: AHU-01 has low airflow"></textarea><button type="submit">Send</button></div><small>Guidance for trained personnel. Follow site procedures, LOTO, and manufacturer instructions.</small></form></section>`);

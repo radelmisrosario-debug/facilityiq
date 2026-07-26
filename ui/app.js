@@ -28,17 +28,17 @@ function renderHome(){
       <p>Trace equipment relationships, review flow paths, and work through system-level symptoms and checks.</p>
       <span class="launch-link">Open plant systems <b>→</b></span>
     </button>
-    <button class="launch-card assistant-launch" id="assistant-button">
-      <span class="launch-number">03</span><span class="launch-type">GUIDED ASSISTANT</span>
-      <h2>Ask FacilityIQ</h2>
-      <p>Describe what the equipment is doing in your own words. FacilityIQ will match the asset and guide the next checks.</p>
-      <span class="launch-link">Start a conversation <b>→</b></span>
-    </button>
     <button class="launch-card manual-launch" id="manual-button">
-      <span class="launch-number">04</span><span class="launch-type">OPERATIONS REFERENCE</span>
+      <span class="launch-number">03</span><span class="launch-type">OPERATIONS REFERENCE</span>
       <h2>Facility Knowledge Base</h2>
       <p>Search operating sequences, system relationships, preventive-maintenance intervals, safety notes, and items that still need field verification.</p>
       <span class="launch-link">Explore knowledge base <b>→</b></span>
+    </button>
+    <button class="launch-card assistant-launch" id="assistant-button">
+      <span class="launch-number">04</span><span class="launch-type">QUICK ANSWERS</span>
+      <h2>Ask FacilityIQ</h2>
+      <p>Ask which equipment serves a room, search facility knowledge, or describe an issue and open the matching troubleshooting guide.</p>
+      <span class="launch-link">Ask a question <b>→</b></span>
     </button>
   </div>
   <p class="launch-safety"><strong>Work safely.</strong> FacilityIQ supports trained personnel and does not replace LOTO, permits, site procedures, or manufacturer instructions.</p>`;
@@ -113,7 +113,7 @@ function renderAsset(asset){
   const systemLinks=relatedSystems.length?`<div class="related-systems"><strong>Related systems</strong>${relatedSystems.map(s=>`<button class="text-button" data-related-system="${esc(s.id)}">${esc(s.name)}</button>`).join("")}</div>`:"";
   const houseDryerMatch=asset.id.match(/^House-AC-Air-Dryer-(0[1-3])$/);
   const controlsNote=asset.category==="Air Handling Unit"?`<div class="operating-note"><strong>AHU control relationships</strong><p>Cooling depends on chilled water at the active Desigo setpoint and pneumatic air from the dedicated Control Air Compressor and Control Air Dryer. The heating valve is normally open and the cooling valve is normally closed; loss of control air can create simultaneous heating and loss of cooling.</p></div>`:asset.id==="Control-AC"||asset.id==="Control-AC-Air-Dryer"?`<div class="operating-note"><strong>AHU control-air dependency</strong><p>This asset is part of the dedicated pneumatic control-air source for AHU valves. Low header or branch pressure can leave heating valves open and cooling valves closed.</p></div>`:houseDryerMatch?`<div class="operating-note"><strong>Dedicated laboratory air-dryer train</strong><p>This dryer is dedicated to House Air Compressor ${houseDryerMatch[1]}. Check the compressor and dryer together when diagnosing low pressure, high pressure drop, wet air, or poor dew point. This train supplies laboratory air and does not control AHU valves.</p></div>`:asset.id.startsWith("House-AC-")?`<div class="operating-note"><strong>Laboratory compressed-air service</strong><p>This House Air Compressor supplies laboratory compressed-air demand through its matching dedicated air dryer. It does not supply pneumatic control air to the AHU valves.</p></div>`:exhaustSystems.length?`<div class="operating-note"><strong>Paired laboratory exhaust service</strong>${exhaustSystems.map(system=>`<p><strong>${esc(system.name)}:</strong> ${esc(system.fans.join(" and "))} work together on shared ductwork. ${esc(system.loads.join("; "))}. Diagnose both fans, common duct static, shared controls, and the affected local branch.</p>`).join("")}</div>`:"";
-  app.innerHTML=`<div class="result-card asset-overview"><span class="status">${esc(asset.id)}</span><h2>${esc(asset.name)}</h2><p class="meta"><strong>Category:</strong> ${esc(asset.category)}<br><strong>Manufacturer:</strong> ${esc(asset.manufacturer)}<br><strong>Model:</strong> ${esc(asset.model)}${asset.serialNumber?`<br><strong>Serial:</strong> ${esc(asset.serialNumber)}`:""}<br><strong>Location:</strong> ${esc(asset.location)}${asset.serviceArea?`<br><strong>Serves:</strong> ${esc(asset.serviceArea)}`:""}</p>${manual}${asset.manualNote?`<p class="small-note manual-note">${esc(asset.manualNote)}</p>`:""}${systemLinks}${roomList}${controlsNote}<div class="danger"><strong>Safety:</strong> These guides support trained personnel. They do not replace lockout/tagout, permits, site procedures, manufacturer instructions, or qualified service requirements.</div></div>
+  app.innerHTML=`<div class="result-card asset-overview"><span class="status">${esc(asset.id)}</span><h2>${esc(asset.name)}</h2><p class="meta"><strong>Category:</strong> ${esc(asset.category)}<br><strong>Manufacturer:</strong> ${esc(asset.manufacturer)}<br><strong>Model:</strong> ${esc(asset.model)}${asset.serialNumber?`<br><strong>Serial:</strong> ${esc(asset.serialNumber)}`:""}<br><strong>Location:</strong> ${esc(asset.location)}${asset.serviceArea?`<br><strong>Serves:</strong> ${esc(asset.serviceArea)}`:""}</p>${manual}${asset.manualNote?`<p class="small-note manual-note">${esc(asset.manualNote)}</p>`:""}${systemLinks}${roomList}${controlsNote}${facilityIqAssetPartsMarkup(asset)}<div class="danger"><strong>Safety:</strong> These guides support trained personnel. They do not replace lockout/tagout, permits, site procedures, manufacturer instructions, or qualified service requirements.</div></div>
   <div class="section-title unified-intro"><h3>Select the symptom</h3><p>Answer the short guided checks once. FacilityIQ will use those answers as evidence and provide ranked diagnostic ratings with the conclusion.</p></div><div class="card-grid">${asset.problems.map(p=>`<button class="card symptom-card" data-problem="${esc(p.id)}"><span class="card-kicker">GUIDED + EVIDENCE DIAGNOSIS</span><h2>${esc(p.name)}</h2><p class="meta">${esc(p.description)}</p></button>`).join("")}</div>`;
   app.querySelectorAll("[data-related-system]").forEach(b=>b.onclick=()=>setRoute({system:b.dataset.relatedSystem}));
   app.querySelectorAll("[data-problem]").forEach(b=>b.onclick=()=>{const p=asset.problems.find(x=>x.id===b.dataset.problem);clearSession(asset.id,p.id);setRoute({asset:asset.id,problem:p.id,step:p.startStep})});

@@ -87,9 +87,11 @@ function facilityIqReplacementPart(asset,result){
   const officialLookup=String(asset.manufacturer||"").toLowerCase().includes("greenheck")?"https://www.greenheck.com/shop/parts":
     String(asset.manufacturer||"").toLowerCase().includes("trane")?"https://www.trane.com/commercial/north-america/us/en/parts-supplies.html":
     String(asset.manufacturer||"").toLowerCase().includes("mitsubishi")?"https://www.mitsubishitechinfo.ca/":null;
+  const inventoryParts=typeof facilityIqPartsForAsset==="function"?facilityIqPartsForAsset(asset.id).filter(part=>facilityIqPartMatchesComponent(part,component)):[];
   return {
     component,
     exactPart,
+    inventoryParts,
     searchUrl:`https://www.google.com/search?q=${encodeURIComponent(query)}`,
     officialLookup,
     query
@@ -99,13 +101,16 @@ function facilityIqReplacementPart(asset,result){
 function facilityIqReplacementPartMarkup(asset,result){
   const part=facilityIqReplacementPart(asset,result);
   if(!part)return "";
-  return `<section class="parts-planning"><span class="card-kicker">PARTS PLANNING</span><h3>Candidate replacement: ${esc(part.component)}</h3><p><strong>Search specification:</strong> ${esc(part.query)}</p>${part.exactPart?`<p><strong>Verified catalog part:</strong> ${esc(part.exactPart.partNumber)}</p><a class="manual-button" href="${esc(part.exactPart.url)}" target="_blank" rel="noopener">Open exact part</a>`:`<p class="small-note">No exact part number is recorded in FacilityIQ. Use the links to identify the OEM part, then verify it against the installed component before ordering.</p><div class="parts-actions"><a class="manual-button" href="${esc(part.searchUrl)}" target="_blank" rel="noopener">Search this part specification</a>${part.officialLookup?`<a class="secondary-button parts-link" href="${esc(part.officialLookup)}" target="_blank" rel="noopener">Open OEM parts lookup</a>`:""}${asset.manual?`<a class="secondary-button parts-link" href="${esc(asset.manual)}" target="_blank" rel="noopener">Check parts in manual</a>`:""}</div>`}<ul><li>Match the full asset model and serial number.</li><li>Match the removed part number, voltage, phase, ratings, dimensions, connections, rotation, and revision as applicable.</li><li>Confirm supersession and compatibility with the OEM or authorized supplier before purchase.</li></ul></section>`;
+  const inventory=part.inventoryParts.length?`<div class="matched-inventory"><h4>Matched facility inventory</h4>${part.inventoryParts.map(facilityIqPartCardMarkup).join("")}</div>`:"";
+  return `<section class="parts-planning"><span class="card-kicker">PARTS PLANNING</span><h3>Candidate replacement: ${esc(part.component)}</h3>${inventory}<p><strong>Search specification:</strong> ${esc(part.query)}</p>${part.exactPart?`<p><strong>Verified catalog part:</strong> ${esc(part.exactPart.partNumber)}</p><a class="manual-button" href="${esc(part.exactPart.url)}" target="_blank" rel="noopener">Open exact part</a>`:`<p class="small-note">${part.inventoryParts.length?"Use the associated inventory part when its specifications match the removed component.":"No matching inventory part is associated with this asset."} Verify the installed component before ordering or installation.</p><div class="parts-actions"><a class="manual-button" href="${esc(part.searchUrl)}" target="_blank" rel="noopener">Search this part specification</a>${part.officialLookup?`<a class="secondary-button parts-link" href="${esc(part.officialLookup)}" target="_blank" rel="noopener">Open OEM parts lookup</a>`:""}${asset.manual?`<a class="secondary-button parts-link" href="${esc(asset.manual)}" target="_blank" rel="noopener">Check parts in manual</a>`:""}</div>`}<ul><li>Match the full asset model and serial number.</li><li>Match the removed part number, voltage, phase, ratings, dimensions, connections, rotation, and revision as applicable.</li><li>Confirm supersession and compatibility with the OEM or authorized supplier before purchase.</li></ul></section>`;
 }
 
 function facilityIqReplacementPartSummary(asset,result){
   const part=facilityIqReplacementPart(asset,result);
   if(!part)return "No replacement part was specifically indicated by this diagnostic result.";
   return `Candidate replacement: ${part.component}
+Matched facility inventory:
+${part.inventoryParts.length?part.inventoryParts.map(item=>`- ${item.name||item.type} (MaintainX ${item.id}; ${facilityIqPartInventoryText(item)}): ${item.url}`).join("\n"):"No associated inventory match for this component."}
 Search specification: ${part.query}
 Part search: ${part.searchUrl}
 ${part.officialLookup?`OEM parts lookup: ${part.officialLookup}\n`:""}${asset.manual?`Asset manual: ${new URL(asset.manual,location.href).href}\n`:""}Exact part number: ${part.exactPart?.partNumber||"Not verified — match the installed part, full model, serial number, ratings, connections, and revision before ordering."}`;

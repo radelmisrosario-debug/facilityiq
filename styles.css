@@ -47,6 +47,13 @@ h1,h2,h3,p{margin-top:0}
 .parts-planning h3{margin:0 0 10px}.parts-planning p{margin-bottom:10px}.parts-planning ul{margin:14px 0 0;padding-left:21px}
 .parts-planning li{margin:7px 0;line-height:1.45}.parts-actions{display:flex;flex-wrap:wrap;gap:9px;align-items:center}
 .parts-actions a{margin:0}.parts-link{display:inline-block;text-decoration:none}
+.asset-parts{margin-top:17px;border:1px solid #ccd8de;border-radius:12px;background:#f8fafb}
+.asset-parts>summary{padding:14px 16px;cursor:pointer;font-weight:900;color:#284f62}
+.asset-parts>.small-note,.asset-parts>.inventory-parts{margin-left:16px;margin-right:16px}
+.inventory-parts{display:grid;gap:10px;margin-bottom:16px}.inventory-part{display:grid;grid-template-columns:1fr auto;gap:14px;padding:13px;border:1px solid #dde5e9;border-radius:10px;background:#fff}
+.inventory-part h4{margin:5px 0}.inventory-part p{margin:0 0 7px}.inventory-part small,.inventory-part strong{display:block;margin-top:5px;color:#5a6c77}.inventory-part-actions{display:flex;flex-direction:column;align-items:stretch;gap:8px;min-width:150px}
+.inventory-part-actions a{text-align:center}.matched-inventory{margin:14px 0}.matched-inventory h4{margin-bottom:8px}
+@media(max-width:650px){.inventory-part{grid-template-columns:1fr}.inventory-part-actions{min-width:0}}
 @media(max-width:560px){.asset-card-actions{grid-template-columns:1fr}.manual-context-head{align-items:flex-start;flex-direction:column}.compact-manual-button{white-space:normal}}
 @media(max-width:560px){.app-shell{padding:14px}.button-row{grid-template-columns:1fr}.card-grid{grid-template-columns:1fr}}
 
