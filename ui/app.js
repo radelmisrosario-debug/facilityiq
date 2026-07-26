@@ -36,9 +36,15 @@ function renderHome(){
     </button>
     <button class="launch-card manual-launch" id="manual-button">
       <span class="launch-number">04</span><span class="launch-type">OPERATIONS REFERENCE</span>
-      <h2>Facility Operations Manual</h2>
+      <h2>Facility Knowledge Base</h2>
       <p>Search operating sequences, system relationships, preventive-maintenance intervals, safety notes, and items that still need field verification.</p>
-      <span class="launch-link">Open manual <b>→</b></span>
+      <span class="launch-link">Explore knowledge base <b>→</b></span>
+    </button>
+    <button class="launch-card manual-library-launch" id="asset-manuals-button">
+      <span class="launch-number">05</span><span class="launch-type">EQUIPMENT DOCUMENTATION</span>
+      <h2>Asset Manual Library</h2>
+      <p>Find manufacturer manuals by asset tag, equipment name, manufacturer, model, or equipment category.</p>
+      <span class="launch-link">Search asset manuals <b>→</b></span>
     </button>
   </div>
   <p class="launch-safety"><strong>Work safely.</strong> FacilityIQ supports trained personnel and does not replace LOTO, permits, site procedures, or manufacturer instructions.</p>`;
@@ -46,10 +52,11 @@ function renderHome(){
   document.getElementById("systems-button").onclick=()=>setRoute({view:"systems"});
   document.getElementById("assistant-button").onclick=()=>facilityIqChat.toggle(true);
   document.getElementById("manual-button").onclick=()=>setRoute({view:"manual"});
+  document.getElementById("asset-manuals-button").onclick=()=>setRoute({view:"asset-manuals"});
 }
 
 function renderOperationsManual(){
-  pageTitle.textContent=facilityOperationsManual.title;homeButton.hidden=false;
+  pageTitle.textContent="Facility Knowledge Base";homeButton.hidden=false;
   const categories=["All",...new Set(facilityOperationsManual.sections.map(section=>section.category))];
   let activeCategory="All";
   app.innerHTML=`<div class="manual-hero result-card"><span class="status">FACILITY OPERATIONS</span><h2>Find the system. Follow the checks.</h2><p>Use this manual for quick operating facts, field checks, safety reminders, and items that still need confirmation.</p></div>
@@ -70,6 +77,27 @@ function renderOperationsManual(){
   }
   app.querySelectorAll("[data-manual-category]").forEach(button=>button.onclick=()=>{activeCategory=button.dataset.manualCategory;app.querySelectorAll("[data-manual-category]").forEach(item=>item.classList.toggle("active",item===button));drawManual()});
   input.oninput=drawManual;drawManual();
+}
+
+function renderAssetManualLibrary(){
+  pageTitle.textContent="Asset Manual Library";
+  homeButton.hidden=false;
+  app.innerHTML=`<div class="section-intro"><span class="status">EQUIPMENT DOCUMENTATION</span><h2>Find an asset manual</h2><p>Search by asset tag, equipment name, manufacturer, model, or category.</p></div>
+  <div class="toolbar"><input id="manual-library-search" class="search" placeholder="Try AHU, Boiler 03, Mitsubishi, RTU, or exhaust fan..." /></div>
+  <div class="manual-library-summary"><strong id="manual-library-count"></strong><span>Availability reflects the documents currently uploaded to FacilityIQ.</span></div>
+  <div id="manual-library-grid" class="card-grid"></div>`;
+  const input=document.getElementById("manual-library-search");
+  const grid=document.getElementById("manual-library-grid");
+  const count=document.getElementById("manual-library-count");
+  function drawLibrary(){
+    const query=input.value.trim().toLowerCase();
+    const list=Object.values(assets).filter(asset=>[asset.id,asset.name,asset.category,asset.manufacturer,asset.model].join(" ").toLowerCase().includes(query)).sort(assetAlphabeticalCompare);
+    count.textContent=`${list.length} assets · ${list.filter(asset=>asset.manual).length} manuals available`;
+    grid.innerHTML=list.length?list.map(asset=>`<article class="card manual-library-card"><span class="asset-id">${esc(asset.id)}</span><h2>${esc(asset.name)}</h2><p class="meta"><strong>${esc(asset.manufacturer)}</strong><br>${esc(asset.model)}<br>${esc(asset.category)}</p>${asset.manual?`<a class="manual-button" href="${esc(asset.manual)}" target="_blank" rel="noopener">Open Manufacturer Manual</a>`:`<span class="manual-unavailable">Manual not uploaded yet</span>`}<button type="button" class="text-button" data-library-asset="${esc(asset.id)}">View asset troubleshooting</button></article>`).join(""):`<div class="result-card"><h2>No matching asset</h2><p>Try a shorter asset tag, manufacturer, model, or equipment type.</p></div>`;
+    grid.querySelectorAll("[data-library-asset]").forEach(button=>button.onclick=()=>setRoute({asset:button.dataset.libraryAsset}));
+  }
+  input.oninput=drawLibrary;
+  drawLibrary();
 }
 
 function renderAssetsHome(){
@@ -140,7 +168,7 @@ function renderStep(asset,problem,stepId){
   }
 }
 function render(){
-  const r=getRoute();if(r.system){const s=facilitySystems[r.system];return s?renderSystem(s):renderSystemsHome();}if(r.view==="manual")return renderOperationsManual();if(r.view==="systems")return renderSystemsHome();if(r.view==="assets")return renderAssetsHome();if(!r.asset)return renderHome();
+  const r=getRoute();if(r.system){const s=facilitySystems[r.system];return s?renderSystem(s):renderSystemsHome();}if(r.view==="manual")return renderOperationsManual();if(r.view==="asset-manuals")return renderAssetManualLibrary();if(r.view==="systems")return renderSystemsHome();if(r.view==="assets")return renderAssetsHome();if(!r.asset)return renderHome();
   const a=assets[r.asset];if(!a)return renderHome();
   if(!r.problem||!r.step)return renderAsset(a);
   const p=a.problems.find(x=>x.id===r.problem);if(!p)return renderAsset(a);

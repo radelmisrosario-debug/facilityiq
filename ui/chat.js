@@ -111,7 +111,7 @@ const facilityIqChat = (() => {
     if(manualIntent&&manual[0]?.score>=4){
       const section=manual[0].section;
       return message("assistant",`${section.title}: ${section.summary}\n\n${section.facts.slice(0,4).join("\n")}\n\nRecommended operating checks:\n${section.operations.slice(0,3).join("\n")}`,{
-        eyebrow:"Facility Operations Manual",
+        eyebrow:"Facility Knowledge Base",
         safety:section.safety,
         detail:section.verify.length?`Field verification still needed:\n${section.verify[0]}`:"",
         actions:[{label:"Open Operations Manual",action:"manual-page"}]

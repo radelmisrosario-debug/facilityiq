@@ -1,5 +1,5 @@
 const facilityOperationsManual = {
-  title:"Facility Operations Manual",
+  title:"Facility Knowledge Base",
   site:"Cambrex – Durham Site",
   purpose:"A searchable operating reference built from the facility documents and confirmed FacilityIQ relationships. Use it with approved SOPs, permits, LOTO, training, and manufacturer instructions.",
   sources:[
