@@ -2,7 +2,7 @@ const app=document.getElementById("app");
 const pageTitle=document.getElementById("page-title");
 const homeButton=document.getElementById("home-button");
 
-function getRoute(){const p=new URLSearchParams(location.search);return{view:p.get("view"),system:p.get("system"),asset:p.get("asset"),problem:p.get("problem"),step:p.get("step")}}
+function getRoute(){const p=new URLSearchParams(location.search);return{view:p.get("view"),system:p.get("system"),asset:p.get("asset"),mode:p.get("mode"),problem:p.get("problem"),step:p.get("step")}}
 function setRoute(params){const u=new URL(location.href);u.search="";Object.entries(params).forEach(([k,v])=>{if(v)u.searchParams.set(k,v)});history.pushState({},"",u);render();window.scrollTo({top:0,behavior:"smooth"})}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
 const assetAlphabeticalCompare=(a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true,sensitivity:"base"})||a.id.localeCompare(b.id,undefined,{numeric:true,sensitivity:"base"});
@@ -69,15 +69,15 @@ function facilityIqRelationshipMarkup(asset){
 }
 
 function renderHome(){
-  pageTitle.textContent="Operations, made clear.";
+  pageTitle.textContent="Maintain. Diagnose. Restore.";
   homeButton.hidden=true;
   app.innerHTML=`<section class="launch-hero">
     <div class="hero-copy">
       <span class="status">BUILT FOR THE PEOPLE WHO KEEP FACILITIES RUNNING</span>
       <h2>Find the fault.<br><em>Restore the system.</em></h2>
-      <p>FacilityIQ brings asset troubleshooting, connected plant knowledge, operating guidance, manuals, and parts into one field-ready workspace.</p>
+      <p>Asset Maintenance brings preventive maintenance, troubleshooting, connected plant knowledge, manuals, and parts into one field-ready workspace.</p>
       <div class="hero-actions">
-        <button type="button" class="primary-button" id="hero-assets-button">Start troubleshooting</button>
+        <button type="button" class="primary-button" id="hero-assets-button">Open asset maintenance</button>
         <button type="button" class="secondary-button" id="hero-ask-button">Ask FacilityIQ</button>
       </div>
     </div>
@@ -86,8 +86,8 @@ function renderHome(){
   <div class="launch-grid">
     <button class="launch-card asset-launch" id="assets-button">
       <span class="launch-icon" aria-hidden="true">A</span><span class="launch-type">EQUIPMENT</span>
-      <h2>Troubleshoot an Asset</h2>
-      <p>Search equipment by name, tag, room, model, alarm, or symptom and follow a focused diagnostic path.</p>
+      <h2>Asset Maintenance</h2>
+      <p>Select an asset, then choose guided troubleshooting or a preventive-maintenance checklist sourced from its attached manual.</p>
       <span class="launch-link">Browse equipment <b>→</b></span>
     </button>
     <button class="launch-card system-launch" id="systems-button">
@@ -109,7 +109,7 @@ function renderHome(){
       <span class="launch-link">Ask a question <b>→</b></span>
     </button>
   </div>
-  <footer class="product-footer"><div><img src="assets/reliant-facility-solutions-logo.png" alt="" /><span>FacilityIQ</span></div><p><strong>Work safely.</strong> FacilityIQ supports trained personnel and does not replace LOTO, permits, site procedures, or manufacturer instructions.</p></footer>`;
+  <footer class="product-footer"><div><img src="assets/reliant-facility-solutions-logo.png" alt="" /><span>Asset Maintenance</span></div><p><strong>Work safely.</strong> Asset Maintenance supports trained personnel and does not replace LOTO, permits, site procedures, or manufacturer instructions.</p></footer>`;
   document.getElementById("hero-assets-button").onclick=()=>setRoute({view:"assets"});
   document.getElementById("hero-ask-button").onclick=()=>facilityIqChat.toggle(true);
   document.getElementById("assets-button").onclick=()=>setRoute({view:"assets"});
@@ -153,14 +153,14 @@ function renderOperationsManual(){
 }
 
 function renderAssetsHome(){
-  pageTitle.textContent="Asset Troubleshooting";
+  pageTitle.textContent="Asset Maintenance";
   homeButton.hidden=false;
   let activeFamily="all";
   const allAssets=Object.values(assets);
   const families=[...assetFamilies];
   if(allAssets.some(asset=>familyForAsset(asset).id==="other"))families.push({id:"other",name:"Other Equipment",short:"EQ",description:"Specialty facility equipment"});
   const familyCount=family=>allAssets.filter(asset=>familyForAsset(asset).id===family.id).length;
-  app.innerHTML=`<div class="section-intro asset-directory-intro"><span class="status">EQUIPMENT DIRECTORY</span><h2>Browse by equipment family</h2><p>Select a system family to see its assets, or search the entire facility by tag, room, model, alarm, or symptom.</p></div>
+  app.innerHTML=`<div class="section-intro asset-directory-intro"><span class="status">ASSET MAINTENANCE</span><h2>Browse by equipment family</h2><p>Select a system family and asset, then choose troubleshooting or preventive maintenance. Search by tag, room, model, alarm, or symptom.</p></div>
   <div class="asset-directory-toolbar"><label for="search">Search all equipment</label><input id="search" class="search" placeholder="Try “EF-10,” “vacuum pump,” “Room 503,” or “not firing”" /></div>
   <nav class="asset-family-menu" aria-label="Equipment families">
     <button type="button" class="active" data-asset-family="all"><span class="family-symbol">ALL</span><span><strong>All equipment</strong><small>${allAssets.length} assets</small></span></button>
@@ -214,7 +214,7 @@ function renderSystem(system){
   app.innerHTML=`<div class="result-card system-summary"><span class="status">INTERACTIVE SYSTEM</span><h2>${esc(system.name)}</h2><p>${esc(system.description)}</p><ul>${system.notes.map(n=>`<li>${esc(n)}</li>`).join("")}</ul></div><div class="system-map system-${esc(system.id)}"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><defs><marker id="arrow" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 z"></path></marker></defs>${loopPipes}${lines}</svg>${pipeLabels}${nodes}</div><section class="system-diagnostics"><h3>System-level troubleshooting</h3>${system.commonSymptoms.map(s=>`<details><summary>${esc(s.name)}</summary><ol>${s.checks.map(c=>`<li>${esc(c)}</li>`).join("")}</ol></details>`).join("")}</section>`;
   app.querySelectorAll("[data-node-asset]").forEach(b=>b.onclick=()=>setRoute({asset:b.dataset.nodeAsset}));
 }
-function renderAsset(asset){
+function renderAsset(asset,mode){
   pageTitle.textContent=asset.name;homeButton.hidden=false;
   const manual=asset.manual?`<a class="manual-button" href="${asset.manual}" target="_blank" rel="noopener">View Manual</a>`:`<span class="small-note resource-unavailable">Manual not uploaded yet</span>`;
   const partsButton=facilityIqAssetPartsButtonMarkup(asset);
@@ -224,14 +224,22 @@ function renderAsset(asset){
   const roomList=servedRooms.length?`<div class="served-rooms"><strong>Rooms / labs served</strong><p>${esc(roomDescription)}</p><div>${servedRooms.map(room=>`<span>${esc(room)}</span>`).join("")}</div></div>`:"";
   const houseDryerMatch=asset.id.match(/^House-AC-Air-Dryer-(0[1-3])$/);
   const controlsNote=asset.category==="Air Handling Unit"?`<div class="operating-note"><strong>AHU control relationships</strong><p>Cooling depends on chilled water at the active Desigo setpoint and pneumatic air from the dedicated Control Air Compressor and Control Air Dryer. The heating valve is normally open and the cooling valve is normally closed; loss of control air can create simultaneous heating and loss of cooling.</p></div>`:asset.id==="Control-AC"||asset.id==="Control-AC-Air-Dryer"?`<div class="operating-note"><strong>Pneumatic control-air dependency</strong><p>This asset supplies control air to AHU heating/cooling valves and pneumatic fume-hood damper actuators. Low header or branch pressure can leave AHU heating valves open, cooling valves closed, and hood dampers unable to maintain commanded airflow.</p></div>`:houseDryerMatch?`<div class="operating-note"><strong>Dedicated laboratory air-dryer train</strong><p>This dryer is dedicated to House Air Compressor ${houseDryerMatch[1]}. ${esc(asset.serviceArea||"")} Check the compressor and dryer together when diagnosing low pressure, high pressure drop, wet air, or poor dew point. This train supplies laboratory air and does not control AHU valves.</p></div>`:asset.id.startsWith("House-AC-")?`<div class="operating-note"><strong>Laboratory compressed-air service</strong><p>${esc(asset.serviceArea||"This House Air Compressor supplies laboratory compressed-air demand through its matching dedicated air dryer")}. It does not supply pneumatic control air to AHU valves or fume-hood actuators.</p></div>`:asset.id.startsWith("BIO-VACP-")?`<div class="operating-note"><strong>Bio-side laboratory vacuum service</strong><p>BIO-VACP-01 and BIO-VACP-02 support the Bio-side laboratory vacuum header. Compare the common header and both pumps before treating a low-vacuum complaint as a single-pump failure.</p></div>`:exhaustSystems.length?`<div class="operating-note"><strong>Paired laboratory exhaust service</strong>${exhaustSystems.map(system=>`<p><strong>${esc(system.name)}:</strong> ${esc(system.fans.join(" and "))} work together on shared ductwork. ${esc(system.loads.join("; "))}. Diagnose both fans, common duct static, shared controls, and the affected local branch.</p>`).join("")}</div>`:"";
+  const workflowSwitch=`<nav class="maintenance-mode-switch" aria-label="Asset maintenance workflow"><button type="button" data-maintenance-mode="troubleshoot" class="${mode==="troubleshoot"?"active":""}"><span>T</span><strong>Troubleshoot</strong><small>Diagnose an active problem</small></button><button type="button" data-maintenance-mode="pm" class="${mode==="pm"?"active":""}"><span>PM</span><strong>Preventive Maintenance</strong><small>Inspect and service the asset</small></button></nav>`;
+  const workflowChoice=`<section class="workflow-choice"><span class="status">CHOOSE A WORKFLOW</span><h2>What are you doing with this asset?</h2><div><button type="button" data-maintenance-mode="troubleshoot"><span>T</span><strong>Troubleshoot a problem</strong><small>Follow guided questions, capture evidence, rank likely causes, and plan a repair.</small><b>Start diagnosis →</b></button><button type="button" data-maintenance-mode="pm"><span>PM</span><strong>Perform preventive maintenance</strong><small>Use the attached-manual checklist, record completion, and capture required field evidence.</small><b>Open PM checklist →</b></button></div></section>`;
+  const troubleshooting=`<div class="section-title unified-intro"><h3>Select the symptom</h3><p>Answer the short guided checks once. Asset Maintenance will use those answers as evidence and provide ranked diagnostic ratings with the conclusion.</p></div><div class="card-grid">${asset.problems.map(p=>`<button class="card symptom-card" data-problem="${esc(p.id)}"><span class="card-kicker">GUIDED + EVIDENCE DIAGNOSIS</span><h2>${esc(p.name)}</h2><p class="meta">${esc(p.description)}</p></button>`).join("")}</div>`;
   app.innerHTML=`<div class="result-card asset-overview"><span class="status">${esc(asset.id)}</span><h2>${esc(asset.name)}</h2><p class="meta"><strong>Category:</strong> ${esc(asset.category)}<br><strong>Manufacturer:</strong> ${esc(asset.manufacturer)}<br><strong>Model:</strong> ${esc(asset.model)}${asset.serialNumber?`<br><strong>Serial:</strong> ${esc(asset.serialNumber)}`:""}<br><strong>Location:</strong> ${esc(asset.location)}${asset.serviceArea?`<br><strong>Serves:</strong> ${esc(asset.serviceArea)}`:""}</p><div class="asset-resource-actions">${manual}${partsButton}</div>${asset.manualNote?`<p class="small-note manual-note">${esc(asset.manualNote)}</p>`:""}${facilityIqAssetPartsMarkup(asset)}${facilityIqRelationshipMarkup(asset)}${roomList}${controlsNote}<div class="danger"><strong>Safety:</strong> These guides support trained personnel. They do not replace lockout/tagout, permits, site procedures, manufacturer instructions, or qualified service requirements.</div></div>
-  <div class="section-title unified-intro"><h3>Select the symptom</h3><p>Answer the short guided checks once. FacilityIQ will use those answers as evidence and provide ranked diagnostic ratings with the conclusion.</p></div><div class="card-grid">${asset.problems.map(p=>`<button class="card symptom-card" data-problem="${esc(p.id)}"><span class="card-kicker">GUIDED + EVIDENCE DIAGNOSIS</span><h2>${esc(p.name)}</h2><p class="meta">${esc(p.description)}</p></button>`).join("")}</div>`;
+  ${mode?workflowSwitch:""}${mode==="troubleshoot"?troubleshooting:mode==="pm"?facilityIqPreventiveMaintenanceMarkup(asset):workflowChoice}`;
   app.querySelectorAll("[data-related-system]").forEach(b=>b.onclick=()=>setRoute({system:b.dataset.relatedSystem}));
   app.querySelectorAll("[data-related-asset]").forEach(b=>b.onclick=()=>setRoute({asset:b.dataset.relatedAsset}));
   app.querySelectorAll("[data-related-room]").forEach(b=>b.onclick=()=>facilityIqChat.ask(`Which equipment serves room ${b.dataset.relatedRoom}?`));
+  app.querySelectorAll("[data-maintenance-mode]").forEach(b=>b.onclick=()=>setRoute({asset:asset.id,mode:b.dataset.maintenanceMode}));
   const partsToggle=document.getElementById("asset-parts-button");
   if(partsToggle)partsToggle.onclick=()=>{const panel=document.getElementById("asset-parts-panel"),open=panel.hidden;panel.hidden=!open;partsToggle.setAttribute("aria-expanded",String(open));partsToggle.textContent=open?"Hide Parts":`View Parts (${facilityIqPartsForAsset(asset.id).length})`;if(open)panel.scrollIntoView({behavior:"smooth",block:"nearest"})};
   app.querySelectorAll("[data-problem]").forEach(b=>b.onclick=()=>{const p=asset.problems.find(x=>x.id===b.dataset.problem);clearSession(asset.id,p.id);setRoute({asset:asset.id,problem:p.id,step:p.startStep})});
+  const pmTasks=[...app.querySelectorAll("[data-pm-task]")];
+  pmTasks.forEach(box=>box.onchange=()=>{const saved=facilityIqReadPm(asset.id);saved[box.dataset.pmTask]=box.checked;facilityIqWritePm(asset.id,saved);box.closest(".pm-task").classList.toggle("complete",box.checked);document.getElementById("pm-progress-count").textContent=`${pmTasks.filter(item=>item.checked).length}/${pmTasks.length}`});
+  const clearPm=document.getElementById("clear-pm-checklist");if(clearPm)clearPm.onclick=()=>{facilityIqWritePm(asset.id,{});render()};
+  const copyPm=document.getElementById("copy-pm-summary");if(copyPm)copyPm.onclick=event=>copyText(facilityIqPmSummary(asset),event.currentTarget);
 }
 
 function fiqGuidedObservations(data){
@@ -353,8 +361,8 @@ function renderStep(asset,problem,stepId){
 function render(){
   const r=getRoute();if(r.system){const s=facilitySystems[r.system];return s?renderSystem(s):renderSystemsHome();}if(r.view==="manual")return renderOperationsManual();if(r.view==="systems")return renderSystemsHome();if(r.view==="assets")return renderAssetsHome();if(!r.asset)return renderHome();
   const a=assets[r.asset];if(!a)return renderHome();
-  if(!r.problem||!r.step)return renderAsset(a);
-  const p=a.problems.find(x=>x.id===r.problem);if(!p)return renderAsset(a);
+  if(!r.problem||!r.step)return renderAsset(a,r.mode);
+  const p=a.problems.find(x=>x.id===r.problem);if(!p)return renderAsset(a,r.mode);
   renderStep(a,p,r.step);
 }
 
