@@ -3,8 +3,8 @@ const facilitySystems={
     id:"chilledWater",name:"Site Chilled-Water System",description:"Primary-secondary chilled-water plant serving the building AHUs.",
     notes:[
       "The Trane and York chillers are the primary cooling sources for the site.",
-      "The source operations manual identifies the Trane as 300 tons and the York as 400 tons; verify current nameplates.",
-      "The documented staging sequence enables the York after Trane capacity remains above 95% for more than 20 minutes; confirm the active approved sequence in Desigo.",
+      "The Trane chiller is rated 300 tons and the York chiller is rated 400 tons; verify current nameplates.",
+      "The York enables after Trane capacity remains above 95% for more than 20 minutes; verify the active approved sequence in Desigo.",
       "Each chiller has a dedicated primary chilled-water pump (PCWP).",
       "The secondary chilled-water pumps (SCWP) supply the building AHUs.",
       "SCWP speed is controlled by the chilled-water differential-pressure controller.",
@@ -22,11 +22,17 @@ const facilitySystems={
       {id:"AHU-LOADS",label:"Building AHUs",sub:"Cooling coils / distribution loop",type:"load",x:50,y:93}
     ],
     links:[
-      ["RETURN-HDR","TRANE-PCWP"],["RETURN-HDR","YORK-PCWP"],
-      ["TRANE-PCWP","TRANE-CH-01"],["YORK-PCWP","YORK-CH-01"],
-      ["TRANE-CH-01","PRIMARY-SUPPLY"],["YORK-CH-01","PRIMARY-SUPPLY"],
-      ["PRIMARY-SUPPLY","SCWP-01"],["PRIMARY-SUPPLY","SCWP-02"],
-      ["SCWP-01","AHU-LOADS"],["SCWP-02","AHU-LOADS"],["AHU-LOADS","RETURN-HDR"]
+      ["RETURN-HDR","TRANE-PCWP","return"],["RETURN-HDR","YORK-PCWP","return"],
+      ["TRANE-PCWP","TRANE-CH-01","return"],["YORK-PCWP","YORK-CH-01","return"],
+      ["TRANE-CH-01","PRIMARY-SUPPLY","supply"],["YORK-CH-01","PRIMARY-SUPPLY","supply"],
+      ["PRIMARY-SUPPLY","SCWP-01","supply"],["PRIMARY-SUPPLY","SCWP-02","supply"],
+      ["SCWP-01","AHU-LOADS","supply"],["SCWP-02","AHU-LOADS","supply"]
+    ],
+    loopPipes:[{type:"return",d:"M 50 93 H 94 V 8 H 50"}],
+    pipeLabels:[
+      {text:"CHILLED-WATER SUPPLY",type:"supply",x:20,y:68},
+      {text:"CHILLED-WATER RETURN",type:"return",x:87,y:52},
+      {text:"CLOSED DISTRIBUTION LOOP",type:"loop",x:21,y:90}
     ],
     commonSymptoms:[
       {name:"Multiple AHUs are warm",checks:["Verify leaving chilled-water temperature from the operating chiller(s).","Confirm the dedicated PCWP for each enabled chiller is running and flow is proven.","Compare secondary-loop DP with setpoint.","Check SCWP command, VFD speed, and pump differential pressure.","Evaluate common-pipe mixing and primary-versus-secondary flow balance."]},
@@ -47,7 +53,7 @@ const facilitySystems={
   },
   hotWater:{
     id:"hotWater",name:"Hot-Water Distribution System",description:"Boiler plant and DP-controlled hot-water distribution pumps.",
-    notes:["HWP speed is controlled by the hot-water differential-pressure controller.","HWP-01 and HWP-02 distribute hot water to AHU coils and CAV/VAV reheat loads.","The source manual describes three lead boilers with Boiler-04 enabled as the lag boiler when supply temperature drops; verify the current rotation and enable threshold."],
+    notes:["HWP speed is controlled by the hot-water differential-pressure controller.","HWP-01 and HWP-02 distribute hot water to AHU coils and CAV/VAV reheat loads.","Boilers 01–03 are lead units. Boiler-04 enables as the lag boiler when supply temperature drops below the staging threshold."],
     nodes:[
       {id:"BOILERS",label:"Boiler Plant",sub:"Boilers 01-04",type:"boiler",x:50,y:18},
       {id:"HW-SUPPLY",label:"Hot-Water Supply Header",type:"header",x:50,y:42},
@@ -55,7 +61,13 @@ const facilitySystems={
       {id:"HWP-02",label:"HWP-02",sub:"DP-controlled VFD",type:"pump",asset:"HWP-02",x:62,y:65},
       {id:"HEATING-LOADS",label:"AHU Heating Coils / Loads",type:"load",x:50,y:88}
     ],
-    links:[["BOILERS","HW-SUPPLY"],["HW-SUPPLY","HWP-01"],["HW-SUPPLY","HWP-02"],["HWP-01","HEATING-LOADS"],["HWP-02","HEATING-LOADS"],["HEATING-LOADS","BOILERS"]],
+    links:[["BOILERS","HW-SUPPLY","supply"],["HW-SUPPLY","HWP-01","supply"],["HW-SUPPLY","HWP-02","supply"],["HWP-01","HEATING-LOADS","supply"],["HWP-02","HEATING-LOADS","supply"]],
+    loopPipes:[{type:"return",d:"M 50 88 H 92 V 18 H 50"}],
+    pipeLabels:[
+      {text:"HOT-WATER SUPPLY",type:"supply",x:20,y:57},
+      {text:"HOT-WATER RETURN",type:"return",x:86,y:50},
+      {text:"CLOSED HEATING LOOP",type:"loop",x:22,y:86}
+    ],
     commonSymptoms:[{name:"Low hot-water DP",checks:["Verify DP transmitter against calibrated gauges.","Check HWP lead/lag status, command, VFD speed, and actual pump DP.","Confirm pump rotation, valve lineup, strainers, and available boiler supply temperature."]}]
   },
   controlAir:{
