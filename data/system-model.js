@@ -3,6 +3,8 @@ const facilitySystems={
     id:"chilledWater",name:"Site Chilled-Water System",description:"Primary-secondary chilled-water plant serving the building AHUs.",
     notes:[
       "The Trane and York chillers are the primary cooling sources for the site.",
+      "The source operations manual identifies the Trane as 300 tons and the York as 400 tons; verify current nameplates.",
+      "The documented staging sequence enables the York after Trane capacity remains above 95% for more than 20 minutes; confirm the active approved sequence in Desigo.",
       "Each chiller has a dedicated primary chilled-water pump (PCWP).",
       "The secondary chilled-water pumps (SCWP) supply the building AHUs.",
       "SCWP speed is controlled by the chilled-water differential-pressure controller.",
@@ -45,7 +47,7 @@ const facilitySystems={
   },
   hotWater:{
     id:"hotWater",name:"Hot-Water Distribution System",description:"Boiler plant and DP-controlled hot-water distribution pumps.",
-    notes:["HWP speed is controlled by the hot-water differential-pressure controller."],
+    notes:["HWP speed is controlled by the hot-water differential-pressure controller.","HWP-01 and HWP-02 distribute hot water to AHU coils and CAV/VAV reheat loads.","The source manual describes three lead boilers with Boiler-04 enabled as the lag boiler when supply temperature drops; verify the current rotation and enable threshold."],
     nodes:[
       {id:"BOILERS",label:"Boiler Plant",sub:"Boilers 01-04",type:"boiler",x:50,y:18},
       {id:"HW-SUPPLY",label:"Hot-Water Supply Header",type:"header",x:50,y:42},
@@ -106,6 +108,7 @@ const facilitySystems={
       "EF-27 and EF-28 serve all fume hoods in Labs 450 and 460.",
       "EF-30 and EF-31 serve all Bio-side laboratory fume hoods and laboratory exhaust points.",
       "Each pair shares ductwork; assess both fans and the common duct before isolating the complaint to one fan."
+      ,"The source operations manual describes Desigo duct-static control with roof dampers modulating as system pressure changes."
     ],
     nodes:[
       {id:"EF-10",label:"EF-10",sub:"Paired with EF-11",type:"fan",asset:"EF-10",x:12,y:12},

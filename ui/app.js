@@ -33,11 +33,33 @@ function renderHome(){
       <p>Describe what the equipment is doing in your own words. FacilityIQ will match the asset and guide the next checks.</p>
       <span class="launch-link">Start a conversation <b>→</b></span>
     </button>
+    <button class="launch-card manual-launch" id="manual-button">
+      <span class="launch-number">04</span><span class="launch-type">OPERATIONS REFERENCE</span>
+      <h2>Facility Operations Manual</h2>
+      <p>Search operating sequences, system relationships, preventive-maintenance intervals, safety notes, and items that still need field verification.</p>
+      <span class="launch-link">Open manual <b>→</b></span>
+    </button>
   </div>
   <p class="launch-safety"><strong>Work safely.</strong> FacilityIQ supports trained personnel and does not replace LOTO, permits, site procedures, or manufacturer instructions.</p>`;
   document.getElementById("assets-button").onclick=()=>setRoute({view:"assets"});
   document.getElementById("systems-button").onclick=()=>setRoute({view:"systems"});
   document.getElementById("assistant-button").onclick=()=>facilityIqChat.toggle(true);
+  document.getElementById("manual-button").onclick=()=>setRoute({view:"manual"});
+}
+
+function renderOperationsManual(){
+  pageTitle.textContent=facilityOperationsManual.title;homeButton.hidden=false;
+  const sourceLinks=facilityOperationsManual.sources.map(source=>`<a class="manual-source" href="${esc(source.file)}" target="_blank" rel="noopener"><strong>${esc(source.name)}</strong><span>${esc(source.status)}</span></a>`).join("");
+  app.innerHTML=`<div class="manual-hero result-card"><span class="status">SITE OPERATIONS REFERENCE</span><h2>${esc(facilityOperationsManual.site)}</h2><p>${esc(facilityOperationsManual.purpose)}</p><div class="manual-sources">${sourceLinks}</div></div>
+  <div class="toolbar manual-toolbar"><input id="manual-search" class="search" placeholder="Search systems, equipment, rooms, procedures, or PM..." /></div>
+  <div id="manual-results" class="manual-grid"></div>`;
+  const input=document.getElementById("manual-search"),results=document.getElementById("manual-results");
+  function drawManual(){
+    const query=input.value.trim().toLowerCase();
+    const sections=facilityOperationsManual.sections.filter(section=>[section.title,section.category,section.summary,...section.facts,...section.operations,section.safety,...section.verify].join(" ").toLowerCase().includes(query));
+    results.innerHTML=sections.length?sections.map(section=>`<article class="manual-section"><div class="manual-section-head"><span>${esc(section.category)}</span><h3>${esc(section.title)}</h3><p>${esc(section.summary)}</p></div><details open><summary>Facility facts</summary><ul>${section.facts.map(item=>`<li>${esc(item)}</li>`).join("")}</ul></details><details><summary>Operating checks</summary><ol>${section.operations.map(item=>`<li>${esc(item)}</li>`).join("")}</ol></details><div class="manual-safety"><strong>Safety</strong><p>${esc(section.safety)}</p></div>${section.verify.length?`<details class="manual-verify"><summary>Field verification needed</summary><ul>${section.verify.map(item=>`<li>${esc(item)}</li>`).join("")}</ul></details>`:""}</article>`).join(""):`<div class="result-card"><h2>No manual section matched</h2><p>Try an asset tag, system name, room, “PM,” or a broader operating term.</p></div>`;
+  }
+  input.oninput=drawManual;drawManual();
 }
 
 function renderAssetsHome(){
@@ -108,7 +130,7 @@ function renderStep(asset,problem,stepId){
   }
 }
 function render(){
-  const r=getRoute();if(r.system){const s=facilitySystems[r.system];return s?renderSystem(s):renderSystemsHome();}if(r.view==="systems")return renderSystemsHome();if(r.view==="assets")return renderAssetsHome();if(!r.asset)return renderHome();
+  const r=getRoute();if(r.system){const s=facilitySystems[r.system];return s?renderSystem(s):renderSystemsHome();}if(r.view==="manual")return renderOperationsManual();if(r.view==="systems")return renderSystemsHome();if(r.view==="assets")return renderAssetsHome();if(!r.asset)return renderHome();
   const a=assets[r.asset];if(!a)return renderHome();
   if(!r.problem||!r.step)return renderAsset(a);
   const p=a.problems.find(x=>x.id===r.problem);if(!p)return renderAsset(a);

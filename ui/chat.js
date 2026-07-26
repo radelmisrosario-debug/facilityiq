@@ -32,6 +32,7 @@ const facilityIqChat = (() => {
     return asset.problems.map(problem=>({problem,score:score(symptomQuery,`${problem.id} ${problem.name} ${problem.description}`)})).filter(x=>x.score).sort((a,b)=>b.score-a.score);
   }
   function globalProblemMatches(query){return Object.values(assets).flatMap(asset=>problemMatches(query,asset).map(x=>({asset,...x}))).sort((a,b)=>b.score-a.score).slice(0,6)}
+  function manualMatches(query){return facilityOperationsManual.sections.map(section=>({section,score:score(query,[section.title,section.category,section.summary,...section.facts,...section.operations].join(" "))})).filter(x=>x.score).sort((a,b)=>b.score-a.score)}
   function save(){try{localStorage.setItem(storageKey,JSON.stringify({messages:state.messages.slice(-40),assetId:state.asset?.id,problemId:state.problem?.id,stepId:state.stepId}))}catch(_){}}
   function restore(){try{const x=JSON.parse(localStorage.getItem(storageKey)||"null");if(!x)return;state.messages=Array.isArray(x.messages)?x.messages:[];state.asset=x.assetId?assets[x.assetId]:null;state.problem=state.asset?.problems.find(p=>p.id===x.problemId)||null;state.stepId=x.stepId||null}catch(_){}}
 
@@ -106,6 +107,16 @@ const facilityIqChat = (() => {
     const query=raw.trim();if(!query)return;message("user",query);
     const exhaustRequest=laboratoryExhaustRequest(query);if(exhaustRequest)return handleLaboratoryExhaust(exhaustRequest);
     const roomRequest=roomComfortRequest(query);if(roomRequest)return handleRoomComfort(roomRequest);
+    const manualIntent=/\b(manual|procedure|sequence|preventive|maintenance|pm|how|what|which|where|support|serve|overview)\b/i.test(query),manual=manualMatches(query);
+    if(manualIntent&&manual[0]?.score>=4){
+      const section=manual[0].section;
+      return message("assistant",`${section.title}: ${section.summary}\n\n${section.facts.slice(0,4).join("\n")}\n\nRecommended operating checks:\n${section.operations.slice(0,3).join("\n")}`,{
+        eyebrow:"Facility Operations Manual",
+        safety:section.safety,
+        detail:section.verify.length?`Field verification still needed:\n${section.verify[0]}`:"",
+        actions:[{label:"Open Operations Manual",action:"manual-page"}]
+      });
+    }
     const equipment=assetMatches(query), current=state.asset?problemMatches(query,state.asset):[], issues=globalProblemMatches(query);
     if(state.asset&&current[0]?.score>=4)return message("assistant",`That sounds closest to “${current[0].problem.name}” for ${state.asset.id}. I’ll begin with a safe first check.`,{actions:[{label:"Start checks",action:"problem",value:`${state.asset.id}|${current[0].problem.id}`}]});
     if(equipment.length){
@@ -132,6 +143,7 @@ const facilityIqChat = (() => {
     if(action==="problem"){const [assetId,problemId]=value.split("|"),asset=assets[assetId],problem=asset?.problems.find(p=>p.id===problemId);if(!problem)return;message("user",problem.name);return chooseProblem(asset,problem)}
     if(action==="asset-page"){toggle(false);return setRoute({asset:value})}
     if(action==="system-page"){toggle(false);return setRoute({system:value})}
+    if(action==="manual-page"){toggle(false);return setRoute({view:"manual"})}
     if(action==="guide"){toggle(false);clearSession(state.asset.id,state.problem.id);return setRoute({asset:state.asset.id,problem:state.problem.id,step:state.problem.startStep})}
     if(action==="manual"&&state.asset?.manual)window.open(state.asset.manual,"_blank","noopener");
   }

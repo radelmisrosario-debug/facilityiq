@@ -54,6 +54,13 @@ EF-10/11 serve the fume hoods in Labs 400 and 505; EF-21/22 serve Labs 430 and
 EF-27/28 serve Labs 450 and 460; and EF-30/31 serve the Bio-side laboratories.
 The assistant separates pair-wide fan/static/duct problems from local hood,
 sink, controller, branch-damper, and branch-duct problems.
+
+The main page also includes a searchable Facility Operations Manual compiled
+from the supplied final manual, draft prompts, and topics document. It covers
+Desigo, AHUs, CAV/VAV controls, chilled and hot water, laboratory exhaust and
+fume hoods, Room 503, compressed air, emergency power, RTUs, life-safety
+systems, access control, preventive-maintenance intervals, and field-verification
+items. The original source documents are available from the manual page.
 AHU sequence, hot-water setpoint and availability, control air, heating/cooling
 valve positions, and heating-coil performance.
 
