@@ -6,7 +6,7 @@
   <meta name="description" content="FacilityIQ — intelligent facility operations, troubleshooting, and equipment knowledge by Reliant Facility Solutions." />
   <meta name="theme-color" content="#252b72" />
   <title>FacilityIQ | Reliant Facility Solutions</title>
-  <link rel="stylesheet" href="styles.css?v=29" />
+  <link rel="stylesheet" href="styles.css?v=30" />
 </head>
 <body>
   <main class="app-shell">
@@ -21,6 +21,7 @@
         <h1 id="page-title">How can FacilityIQ help?</h1>
       </div>
       <div class="header-navigation">
+        <button id="quick-find-button" class="quick-find-button" type="button" aria-haspopup="dialog"><span aria-hidden="true">⌕</span> Quick Find <kbd>Ctrl K</kbd></button>
         <button id="home-button" class="secondary-button" hidden>Home</button>
         <nav class="corner-menu" aria-label="FacilityIQ section navigation">
           <button id="corner-menu-button" type="button" aria-expanded="false" aria-controls="corner-menu-list"><span class="menu-icon" aria-hidden="true"><i></i><i></i><i></i></span> Menu</button>
@@ -36,6 +37,15 @@
     </header>
     <section id="app" aria-live="polite"></section>
   </main>
+  <dialog id="quick-find-dialog" class="quick-find-dialog" aria-labelledby="quick-find-title">
+    <form method="dialog" class="quick-find-shell">
+      <header><div><span>FACILITY-WIDE SEARCH</span><h2 id="quick-find-title">Go directly to what you need</h2></div><button type="submit" aria-label="Close quick find">×</button></header>
+      <label for="quick-find-input">Search assets, rooms, systems, or facility knowledge</label>
+      <input id="quick-find-input" type="search" autocomplete="off" placeholder="Try “EF-10,” “Room 144,” “vacuum,” or “generator runtime”" />
+      <div id="quick-find-results" class="quick-find-results"></div>
+      <footer><span><kbd>↑</kbd><kbd>↓</kbd> navigate</span><span><kbd>Enter</kbd> open</span><span><kbd>Esc</kbd> close</span></footer>
+    </form>
+  </dialog>
   <script src="data/catalog.js?v=15"></script>
 <script src="data/room-assignments.js?v=10"></script>
 <script src="data/hvac-expansion.js?v=14"></script>
@@ -50,7 +60,7 @@
 <script src="engine/rule-engine.js?v=10"></script>
 <script src="engine/evidence-coverage.js?v=10"></script>
 <script src="engine/v04-ui.js?v=10"></script>
-  <script src="ui/app.js?v=31"></script>
-<script src="ui/chat.js?v=19"></script>
+  <script src="ui/app.js?v=32"></script>
+<script src="ui/chat.js?v=20"></script>
 </body>
 </html>

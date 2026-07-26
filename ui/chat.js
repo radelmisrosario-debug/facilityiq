@@ -271,5 +271,6 @@ const facilityIqChat = (() => {
     document.getElementById("chat-log").onclick=event=>{const button=event.target.closest("[data-chat-action]"),example=event.target.closest("[data-chat-example]");if(button)act(button.dataset.chatAction,button.dataset.chatValue);if(example){document.getElementById("chat-input").value=example.dataset.chatExample;document.getElementById("chat-form").requestSubmit()}};
   }
   restore();mount();if(!state.messages.length)reset();
-  return {toggle,reset};
+  function ask(query){toggle(true);submit(query)}
+  return {toggle,reset,ask};
 })();

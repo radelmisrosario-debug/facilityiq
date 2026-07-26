@@ -312,6 +312,54 @@ function render(){
   const p=a.problems.find(x=>x.id===r.problem);if(!p)return renderAsset(a);
   renderStep(a,p,r.step);
 }
+
+const quickFindDialog=document.getElementById("quick-find-dialog");
+const quickFindInput=document.getElementById("quick-find-input");
+const quickFindResults=document.getElementById("quick-find-results");
+let quickFindActiveIndex=0;
+function quickFindRecords(){
+  const assetRecords=Object.values(assets).map(asset=>({type:"Asset",label:`${asset.id} · ${asset.name}`,detail:`${asset.category} · ${asset.location}`,action:"asset",value:asset.id,keywords:[asset.id,asset.name,asset.category,asset.manufacturer,asset.model,asset.location,...facilityIqRoomsForAsset(asset.id).map(room=>`room ${room} lab ${room}`)].join(" ")}));
+  const rooms=[...new Set([...Object.values(facilityIqRoomAssignments).flat(),...Object.keys(facilityIqDedicatedRoomEquipment),...Object.values(facilityIqExhaustSystems).flatMap(system=>system.rooms)])].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+  const roomRecords=rooms.map(room=>{const ahus=facilityIqAhusForRoom(room),dedicated=facilityIqDedicatedEquipmentForRoom(room),exhaust=facilityIqExhaustSystemsForRoom(room);const served=[...ahus.map(asset=>asset.id),...dedicated.map(asset=>asset.id),...exhaust.flatMap(system=>system.fans)];return {type:"Room",label:`Room / Lab ${room}`,detail:served.length?`Served by ${[...new Set(served)].join(", ")}`:"Serving equipment requires verification",action:"room",value:room,keywords:`room ${room} lab ${room} laboratory ${room} ${served.join(" ")}`}});
+  const systemRecords=Object.values(facilitySystems).map(system=>({type:"System",label:system.name,detail:system.description,action:"system",value:system.id,keywords:[system.name,system.description,...system.notes].join(" ")}));
+  const knowledgeRecords=facilityOperationsManual.sections.map(section=>({type:"Knowledge",label:section.title,detail:section.summary,action:"knowledge",value:section.id,keywords:[section.title,section.category,section.summary,...section.facts,...section.operations].join(" ")}));
+  return [...assetRecords,...roomRecords,...systemRecords,...knowledgeRecords];
+}
+function quickFindScore(query,record){
+  const q=query.toLowerCase().trim(),text=`${record.label} ${record.detail} ${record.keywords}`.toLowerCase();
+  if(!q)return record.type==="Asset"?2:record.type==="System"?1:0;
+  if(record.label.toLowerCase()===q)return 100;
+  if(record.label.toLowerCase().startsWith(q))return 70;
+  if(text.includes(q))return 45;
+  return q.split(/\s+/).reduce((score,word)=>score+(text.includes(word)?8:-20),0);
+}
+function drawQuickFind(){
+  const query=quickFindInput.value;
+  const records=quickFindRecords().map(record=>({...record,score:quickFindScore(query,record)})).filter(record=>record.score>0).sort((a,b)=>b.score-a.score||a.label.localeCompare(b.label,undefined,{numeric:true})).slice(0,12);
+  quickFindActiveIndex=Math.min(quickFindActiveIndex,Math.max(0,records.length-1));
+  quickFindResults.innerHTML=records.length?records.map((record,index)=>`<button type="button" class="${index===quickFindActiveIndex?"active":""}" data-quick-action="${esc(record.action)}" data-quick-value="${esc(record.value)}"><span class="quick-find-type">${esc(record.type)}</span><span><strong>${esc(record.label)}</strong><small>${esc(record.detail)}</small></span><b aria-hidden="true">→</b></button>`).join(""):`<div class="quick-find-empty"><strong>No direct match</strong><span>Try an equipment tag, room number, system, or a shorter phrase.</span></div>`;
+}
+function openQuickFind(){
+  quickFindActiveIndex=0;quickFindInput.value="";drawQuickFind();quickFindDialog.showModal();setTimeout(()=>quickFindInput.focus(),0);
+}
+function runQuickFindAction(action,value){
+  quickFindDialog.close();
+  if(action==="asset")return setRoute({asset:value});
+  if(action==="system")return setRoute({system:value});
+  if(action==="knowledge"){setRoute({view:"manual"});setTimeout(()=>{const section=document.getElementById(`manual-${value}`);if(section){section.open=true;section.scrollIntoView({behavior:"smooth",block:"start"})}},0);return}
+  if(action==="room")return facilityIqChat.ask(`Which equipment serves room ${value}?`);
+}
+document.getElementById("quick-find-button").onclick=openQuickFind;
+quickFindInput.oninput=()=>{quickFindActiveIndex=0;drawQuickFind()};
+quickFindInput.onkeydown=event=>{
+  const buttons=[...quickFindResults.querySelectorAll("[data-quick-action]")];
+  if((event.key==="ArrowDown"||event.key==="ArrowUp")&&buttons.length){event.preventDefault();quickFindActiveIndex=(quickFindActiveIndex+(event.key==="ArrowDown"?1:-1)+buttons.length)%buttons.length;drawQuickFind()}
+  if(event.key==="Enter"&&buttons.length){event.preventDefault();buttons[quickFindActiveIndex]?.click()}
+};
+quickFindResults.onclick=event=>{const button=event.target.closest("[data-quick-action]");if(button)runQuickFindAction(button.dataset.quickAction,button.dataset.quickValue)};
+quickFindDialog.onclick=event=>{if(event.target===quickFindDialog)quickFindDialog.close()};
+document.addEventListener("keydown",event=>{if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==="k"){event.preventDefault();openQuickFind()}});
+
 homeButton.onclick=()=>setRoute({});
 document.getElementById("brand-home-button").onclick=()=>setRoute({});
 const cornerMenuButton=document.getElementById("corner-menu-button");
