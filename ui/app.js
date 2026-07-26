@@ -6,6 +6,20 @@ function getRoute(){const p=new URLSearchParams(location.search);return{view:p.g
 function setRoute(params){const u=new URL(location.href);u.search="";Object.entries(params).forEach(([k,v])=>{if(v)u.searchParams.set(k,v)});history.pushState({},"",u);render();window.scrollTo({top:0,behavior:"smooth"})}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
 const assetAlphabeticalCompare=(a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true,sensitivity:"base"})||a.id.localeCompare(b.id,undefined,{numeric:true,sensitivity:"base"});
+const assetFamilies=[
+  {id:"air-handlers",name:"Air Handlers",short:"AHU",description:"Central air-handling units and their room assignments",match:a=>a.category==="Air Handling Unit"},
+  {id:"boilers",name:"Boilers",short:"BLR",description:"Hydronic heating equipment",match:a=>a.category.includes("Boiler")},
+  {id:"chillers",name:"Chillers & Precision Cooling",short:"CH",description:"Primary, dedicated, and precision cooling equipment",match:a=>a.category.includes("Chiller")||a.category==="Precision Cooling System"},
+  {id:"compressed-air",name:"Compressed Air & Dryers",short:"AIR",description:"Control air, house air compressors, and dedicated dryers",match:a=>a.category.includes("Compressor")||a.category==="Refrigerated Air Dryer"},
+  {id:"dehumidification",name:"Dehumidification",short:"DH",description:"Dedicated humidity-control equipment",match:a=>a.category.includes("Dehumidifier")},
+  {id:"exhaust-fans",name:"Exhaust Fans",short:"EF",description:"Roof and paired laboratory exhaust fans",match:a=>a.id.startsWith("EF-")||a.category.includes("Exhaust Fan")},
+  {id:"mini-splits",name:"Mini-Splits",short:"MS",description:"Cooling-only and heat-pump split systems",match:a=>a.id.startsWith("MS-")||a.category.includes("Mini-Split")},
+  {id:"pumps",name:"Hydronic Pumps",short:"P",description:"Primary, secondary, chilled-water, and hot-water pumps",match:a=>a.category.includes("Pump")},
+  {id:"power",name:"Power & Emergency Systems",short:"PWR",description:"Generator and critical-power equipment",match:a=>a.category.includes("Power")||a.category.includes("UPS")||a.category.includes("Generator")},
+  {id:"roof-top-units",name:"Roof Top Units",short:"RTU",description:"Packaged rooftop heating and cooling units",match:a=>a.id.startsWith("RTU-")||a.category.includes("Roof Top Unit")},
+  {id:"vacuum-pumps",name:"Vacuum Pumps",short:"VAC",description:"Biology- and Chemistry-side laboratory vacuum pumps",match:a=>a.category.includes("Vacuum Pump")}
+];
+function familyForAsset(asset){return assetFamilies.find(family=>family.match(asset))||{id:"other",name:"Other Equipment",short:"EQ",description:"Specialty facility equipment"}}
 
 function renderHome(){
   pageTitle.textContent="Operations, made clear.";
@@ -94,19 +108,47 @@ function renderOperationsManual(){
 function renderAssetsHome(){
   pageTitle.textContent="Asset Troubleshooting";
   homeButton.hidden=false;
-  app.innerHTML=`<div class="section-intro"><span class="status">EQUIPMENT</span><h2>Select the asset you want to troubleshoot</h2><p>Search by tag, equipment name, room, model, alarm, or symptom.</p></div><div class="toolbar"><input id="search" class="search" placeholder="Search asset, room, model, alarm, or symptom..." /></div><div id="asset-grid" class="card-grid"></div>`;
+  let activeFamily="all";
+  const allAssets=Object.values(assets);
+  const families=[...assetFamilies];
+  if(allAssets.some(asset=>familyForAsset(asset).id==="other"))families.push({id:"other",name:"Other Equipment",short:"EQ",description:"Specialty facility equipment"});
+  const familyCount=family=>allAssets.filter(asset=>familyForAsset(asset).id===family.id).length;
+  app.innerHTML=`<div class="section-intro asset-directory-intro"><span class="status">EQUIPMENT DIRECTORY</span><h2>Browse by equipment family</h2><p>Select a system family to see its assets, or search the entire facility by tag, room, model, alarm, or symptom.</p></div>
+  <div class="asset-directory-toolbar"><label for="search">Search all equipment</label><input id="search" class="search" placeholder="Try “EF-10,” “vacuum pump,” “Room 503,” or “not firing”" /></div>
+  <nav class="asset-family-menu" aria-label="Equipment families">
+    <button type="button" class="active" data-asset-family="all"><span class="family-symbol">ALL</span><span><strong>All equipment</strong><small>${allAssets.length} assets</small></span></button>
+    ${families.map(family=>`<button type="button" data-asset-family="${esc(family.id)}"><span class="family-symbol">${esc(family.short)}</span><span><strong>${esc(family.name)}</strong><small>${familyCount(family)} assets</small></span></button>`).join("")}
+  </nav>
+  <div class="asset-results-heading"><div><span id="asset-results-eyebrow">ALL EQUIPMENT</span><h3 id="asset-results-title">${allAssets.length} assets organized by family</h3></div><button type="button" id="asset-family-reset" class="text-button" hidden>View all families</button></div>
+  <div id="asset-groups" class="asset-groups"></div>`;
   const input=document.getElementById("search");
-  const grid=document.getElementById("asset-grid");
+  const groups=document.getElementById("asset-groups");
+  const menu=app.querySelector(".asset-family-menu");
+  const resultEyebrow=document.getElementById("asset-results-eyebrow");
+  const resultTitle=document.getElementById("asset-results-title");
+  const reset=document.getElementById("asset-family-reset");
+  const cardMarkup=a=>{const manualStatus=facilityIqManualStatus(a);return `<article class="card asset-list-card" data-asset-card="${esc(a.id)}" role="link" tabindex="0" aria-label="Open ${esc(a.name)} troubleshooting"><span class="asset-id">${esc(a.id)}</span><h2><button type="button" class="asset-name-link" data-asset="${esc(a.id)}">${esc(a.name)}</button></h2><dl class="asset-details"><div><dt>Make</dt><dd>${esc(a.manufacturer||"To be confirmed")}</dd></div><div><dt>Model</dt><dd>${esc(a.model||"To be confirmed")}</dd></div><div><dt>Location</dt><dd>${esc(a.location||"To be confirmed")}</dd></div></dl><div class="asset-card-actions"><button type="button" class="primary-button" data-asset="${esc(a.id)}">Troubleshoot</button>${a.manual?`<a class="manual-button" href="${esc(a.manual)}" target="_blank" rel="noopener">Open manual</a>`:`<span class="manual-unavailable">${esc(manualStatus.label)}</span>`}</div>${a.manualNote?`<p class="small-note asset-manual-note">${esc(a.manualNote)}</p>`:""}</article>`};
   function draw(){
     const q=input.value.trim().toLowerCase();
-    const list=Object.values(assets).filter(a=>[a.id,a.name,a.category,a.manufacturer,a.model,a.location,...facilityIqRoomsForAsset(a.id).flatMap(room=>[`room ${room}`,`lab ${room}`,`laboratory ${room}`]),...a.problems.flatMap(p=>[p.name,p.description])].join(" ").toLowerCase().includes(q)).sort(assetAlphabeticalCompare);
-    grid.innerHTML=list.map(a=>{const manualStatus=facilityIqManualStatus(a);return `<article class="card asset-list-card" data-asset-card="${esc(a.id)}" role="link" tabindex="0" aria-label="Open ${esc(a.name)} troubleshooting"><span class="asset-id">${esc(a.id)}</span><h2><button type="button" class="asset-name-link" data-asset="${esc(a.id)}">${esc(a.name)}</button></h2><dl class="asset-details"><div><dt>Make</dt><dd>${esc(a.manufacturer||"To be confirmed")}</dd></div><div><dt>Model</dt><dd>${esc(a.model||"To be confirmed")}</dd></div><div><dt>Location</dt><dd>${esc(a.location||"To be confirmed")}</dd></div></dl><div class="asset-card-actions"><button type="button" class="primary-button" data-asset="${esc(a.id)}">Troubleshoot</button>${a.manual?`<a class="manual-button" href="${esc(a.manual)}" target="_blank" rel="noopener">Open manual</a>`:`<span class="manual-unavailable">${esc(manualStatus.label)}</span>`}</div>${a.manualNote?`<p class="small-note asset-manual-note">${esc(a.manualNote)}</p>`:""}</article>`}).join("");
-    grid.querySelectorAll("[data-asset]").forEach(b=>b.onclick=()=>setRoute({asset:b.dataset.asset}));
-    grid.querySelectorAll("[data-asset-card]").forEach(card=>{
+    const matches=allAssets.filter(a=>(q||activeFamily==="all"||familyForAsset(a).id===activeFamily)&&[a.id,a.name,a.category,a.manufacturer,a.model,a.location,...facilityIqRoomsForAsset(a.id).flatMap(room=>[`room ${room}`,`lab ${room}`,`laboratory ${room}`]),...a.problems.flatMap(p=>[p.name,p.description])].join(" ").toLowerCase().includes(q)).sort(assetAlphabeticalCompare);
+    const visibleFamilies=families.map(family=>({family,items:matches.filter(asset=>familyForAsset(asset).id===family.id)})).filter(group=>group.items.length);
+    const selected=families.find(family=>family.id===activeFamily);
+    resultEyebrow.textContent=q?"SEARCH RESULTS":activeFamily==="all"?"ALL EQUIPMENT":selected.name.toUpperCase();
+    resultTitle.textContent=q?`${matches.length} matching asset${matches.length===1?"":"s"}`:activeFamily==="all"?`${matches.length} assets organized by family`:`${matches.length} ${selected.name.toLowerCase()}`;
+    reset.hidden=activeFamily==="all";
+    groups.innerHTML=visibleFamilies.length?visibleFamilies.map(({family,items})=>`<details class="asset-family-group"${activeFamily!=="all"||q?" open":""}><summary><span class="family-symbol">${esc(family.short)}</span><span><strong>${esc(family.name)}</strong><small>${esc(family.description)}</small></span><b>${items.length}</b></summary><div class="card-grid">${items.map(cardMarkup).join("")}</div></details>`).join(""):`<div class="result-card manual-empty"><h2>No matching assets</h2><p>Try a shorter equipment tag, room number, manufacturer, or symptom.</p></div>`;
+    groups.querySelectorAll("[data-asset]").forEach(b=>b.onclick=()=>setRoute({asset:b.dataset.asset}));
+    groups.querySelectorAll("[data-asset-card]").forEach(card=>{
       card.onclick=event=>{if(!event.target.closest("a,button"))setRoute({asset:card.dataset.assetCard})};
       card.onkeydown=event=>{if((event.key==="Enter"||event.key===" ")&&!event.target.closest("a,button")){event.preventDefault();setRoute({asset:card.dataset.assetCard})}};
     });
   }
+  menu.querySelectorAll("[data-asset-family]").forEach(button=>button.onclick=()=>{
+    activeFamily=button.dataset.assetFamily;input.value="";
+    menu.querySelectorAll("[data-asset-family]").forEach(item=>item.classList.toggle("active",item===button));
+    draw();document.querySelector(".asset-results-heading").scrollIntoView({behavior:"smooth",block:"start"});
+  });
+  reset.onclick=()=>menu.querySelector('[data-asset-family="all"]').click();
   input.oninput=draw; draw();
 }
 
