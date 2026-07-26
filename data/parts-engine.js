@@ -8,7 +8,12 @@ function facilityIqNormalizePartAssetId(value){
 }
 
 function facilityIqPartsForAsset(assetId){
-  return facilityIqPartsCatalog.filter(part=>part.assets.some(value=>facilityIqNormalizePartAssetId(value)===assetId));
+  const asset=assets[assetId];
+  const listed=facilityIqPartsCatalog.filter(part=>part.assets.some(value=>facilityIqNormalizePartAssetId(value)===assetId)).map(part=>({...part,source:"facility"}));
+  const manual=asset&&typeof facilityIqManualPartsForAsset==="function"?facilityIqManualPartsForAsset(asset):[];
+  const listedText=listed.map(part=>`${part.type} ${part.name} ${part.description}`.toLowerCase()).join(" ");
+  const additional=manual.filter(part=>!listedText.includes(part.name.toLowerCase()));
+  return [...listed,...additional];
 }
 
 function facilityIqPartMatchesComponent(part,component){
@@ -29,19 +34,20 @@ function facilityIqInventoryPartsForResult(asset,result){
 }
 
 function facilityIqPartSearchUrl(part){
-  const query=[part.name,part.type,part.partNumbers,part.description].filter(Boolean).join(" ");
+  const query=(part.source==="manual"?[part.searchContext,part.name,"replacement part"]:[part.name,part.type,part.partNumbers,part.description]).filter(Boolean).join(" ");
   return `https://www.google.com/search?q=${encodeURIComponent(query)}`;
 }
 
 function facilityIqPartCardMarkup(part){
   const price=part.unitCost?`Price: $${Number(part.unitCost).toFixed(2)}`:"Price not recorded";
-  return `<article class="inventory-part"><div><span class="asset-id">FACILITY PART</span><h4>${esc(part.name||part.type||"Unnamed part")}</h4><p>${esc(part.description||"No description recorded.")}</p><strong>${esc(price)}</strong></div><div class="inventory-part-actions"><a class="manual-button" href="${esc(facilityIqPartSearchUrl(part))}" target="_blank" rel="noopener">Search part on Google</a></div></article>`;
+  const source=part.source==="manual"?"MANUAL-LISTED PART":"FACILITY PART";
+  return `<article class="inventory-part ${part.source==="manual"?"manual-listed-part":""}"><div><span class="asset-id">${source}</span><h4>${esc(part.name||part.type||"Unnamed part")}</h4><p>${esc(part.description||"No description recorded.")}</p><strong>${esc(price)}</strong></div><div class="inventory-part-actions"><a class="manual-button" href="${esc(facilityIqPartSearchUrl(part))}" target="_blank" rel="noopener">Search part on Google</a>${part.source==="manual"&&part.manual?`<a class="secondary-button parts-link" href="${esc(part.manual)}" target="_blank" rel="noopener">View source manual</a>`:""}</div></article>`;
 }
 
 function facilityIqAssetPartsMarkup(asset){
   const parts=facilityIqPartsForAsset(asset.id);
   if(!parts.length)return "";
-  return `<section id="asset-parts-panel" class="asset-parts" hidden><div class="asset-parts-heading"><h3>Associated replacement parts</h3><span>${parts.length} part record${parts.length===1?"":"s"}</span></div><p class="small-note">Parts associated with this asset. Confirm the installed component and specifications before use.</p><div class="inventory-parts">${parts.map(facilityIqPartCardMarkup).join("")}</div></section>`;
+  return `<section id="asset-parts-panel" class="asset-parts" hidden><div class="asset-parts-heading"><h3>Associated replacement parts</h3><span>${parts.length} part record${parts.length===1?"":"s"}</span></div><p class="small-note">Facility parts come from your supplied list. Manual-listed parts come from manufacturer parts diagrams and require exact model, configuration, and serial verification. Prices are shown only when supplied.</p><div class="inventory-parts">${parts.map(facilityIqPartCardMarkup).join("")}</div></section>`;
 }
 
 function facilityIqAssetPartsButtonMarkup(asset){
