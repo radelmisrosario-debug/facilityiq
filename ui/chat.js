@@ -36,7 +36,7 @@ const facilityIqChat = (() => {
   function save(){try{localStorage.setItem(storageKey,JSON.stringify({messages:state.messages.slice(-40),assetId:state.asset?.id,problemId:state.problem?.id,stepId:state.stepId}))}catch(_){}}
   function restore(){try{const x=JSON.parse(localStorage.getItem(storageKey)||"null");if(!x)return;state.messages=Array.isArray(x.messages)?x.messages:[];state.asset=x.assetId?assets[x.assetId]:null;state.problem=state.asset?.problems.find(p=>p.id===x.problemId)||null;state.stepId=x.stepId||null}catch(_){}}
 
-  function message(role,text,extra={}){state.messages.push({role,text,...extra});save();draw()}
+  function message(role,text,extra={}){state.messages.push({role,text,...extra});save();draw();return true}
   function problemActions(asset){return asset.problems.map(problem=>({label:problem.name,action:"problem",value:`${asset.id}|${problem.id}`}))}
   function chooseProblem(asset,problem){state.asset=asset;state.problem=problem;state.stepId=problem.startStep;save();presentStep()}
   function roomComfortRequest(query){
@@ -103,8 +103,65 @@ const facilityIqChat = (() => {
     if(step.type==="question")return message("assistant",step.text,{eyebrow:`${state.asset.id} · ${state.problem.name}`,safety:step.safety,actions:[{label:"Yes",action:"answer",value:"yes"},{label:"No",action:"answer",value:"no"},{label:"Not sure",action:"unsure"}]});
     message("assistant",step.title,{eyebrow:"Likely finding",detail:`Likely cause: ${step.cause}\n\nRecommended action: ${step.action}`,safety:step.safety,actions:[{label:`Open ${state.asset.id} guide`,action:"guide"},...(state.asset.manual?[{label:"Open manual",action:"manual"}]:[]),{label:"Start over",action:"reset"}]});
   }
+  function fastRoute(query){
+    const exhaust=laboratoryExhaustRequest(query);
+    if(exhaust){
+      const system=exhaust.systems[0],area=exhaust.room?`Lab ${exhaust.room}`:"the Bio-side";
+      return message("assistant",`${area} is served by ${system.fans.join(" and ")} on shared ductwork. Open the matching troubleshooting route below.`,{
+        eyebrow:"System identified",
+        safety:"Treat inadequate fume-hood capture as a laboratory safety condition and follow the site hood-outage procedure.",
+        actions:[
+          {label:"Troubleshoot the exhaust system",action:"system-page",value:"laboratoryExhaust"},
+          ...system.fans.map(id=>({label:`Troubleshoot ${id}`,action:"problem",value:`${id}|low-airflow`}))
+        ]
+      });
+    }
+    const room=roomComfortRequest(query);
+    if(room){
+      if(room.dedicatedEquipment.length){
+        const problem=room.condition==="humid"?"high-humidity":null;
+        return message("assistant",`Room ${room.room} uses the dedicated Bry-Air dehumidifier and 503 chiller, not AHU-02.`,{
+          eyebrow:"System identified",
+          actions:[
+            {label:"Troubleshoot Room 503 system",action:"system-page",value:"processCooling"},
+            ...(problem?[{label:"Troubleshoot high humidity",action:"problem",value:`Bry-Air-DEHU|${problem}`}]:[]),
+            {label:"Troubleshoot 503 chiller",action:"asset-page",value:"503-Aircon-Tech-Chiller"}
+          ]
+        });
+      }
+      if(!room.ahus.length)return message("assistant",`I do not have a verified serving-system assignment for Room ${room.room}.`,{actions:[{label:"Browse asset troubleshooting",action:"browse"}]});
+      const problemId=room.condition==="cold"?"low-space-temperature":room.condition==="hot"?"high-space-temperature":null;
+      return message("assistant",`Room ${room.room} is mapped to ${room.ahus.map(asset=>asset.id).join(" and ")}. Open the matched guide below; it starts with the Desigo setpoint and room terminal, then follows the serving AHU and plant dependencies.`,{
+        eyebrow:"System identified",
+        detail:room.ahus.length>1?"Confirm the active serving AHU in Desigo because this room appears on more than one assignment.":"",
+        actions:room.ahus.map(asset=>problemId?{label:`Troubleshoot ${asset.id} · Room too ${room.condition}`,action:"problem",value:`${asset.id}|${problemId}`}:{label:`Open ${asset.id} troubleshooting`,action:"asset-page",value:asset.id})
+      });
+    }
+    const equipment=assetMatches(query);
+    if(equipment[0]?.score>=8||equipment.length===1){
+      const asset=equipment[0].asset,inferred=problemMatches(query,asset)[0];
+      state.asset=asset;state.problem=null;state.stepId=null;
+      if(inferred?.score>=4)return message("assistant",`I matched this to ${asset.id} · ${inferred.problem.name}.`,{
+        eyebrow:"Troubleshooting route",
+        actions:[{label:"Open troubleshooting guide",action:"problem",value:`${asset.id}|${inferred.problem.id}`}]
+      });
+      return message("assistant",`I found ${asset.id}, ${asset.name}.`,{
+        eyebrow:"Asset identified",
+        actions:[{label:`Open ${asset.id} troubleshooting`,action:"asset-page",value:asset.id}]
+      });
+    }
+    if(equipment.length>1)return message("assistant","I found a few possible assets. Select the correct one to open its troubleshooting page.",{
+      actions:equipment.map(item=>({label:`${item.asset.id} · ${item.asset.name}`,action:"asset-page",value:item.asset.id}))
+    });
+    const issues=globalProblemMatches(query);
+    if(issues.length)return message("assistant","Select the equipment that matches the issue.",{
+      actions:issues.slice(0,4).map(item=>({label:`${item.asset.id} · ${item.problem.name}`,action:"problem",value:`${item.asset.id}|${item.problem.id}`}))
+    });
+    return null;
+  }
   function submit(raw){
     const query=raw.trim();if(!query)return;message("user",query);
+    if(fastRoute(query))return;
     const exhaustRequest=laboratoryExhaustRequest(query);if(exhaustRequest)return handleLaboratoryExhaust(exhaustRequest);
     const roomRequest=roomComfortRequest(query);if(roomRequest)return handleRoomComfort(roomRequest);
     const manualIntent=/\b(manual|procedure|sequence|preventive|maintenance|pm|how|what|which|where|support|serve|overview)\b/i.test(query),manual=manualMatches(query);
@@ -140,7 +197,7 @@ const facilityIqChat = (() => {
     if(action==="reset")return reset();
     if(action==="browse"){toggle(false);setRoute({view:"assets"});return document.getElementById("search")?.focus()}
     if(action==="asset"){const asset=assets[value];if(!asset)return;state.asset=asset;state.problem=null;message("user",`${asset.id} · ${asset.name}`);return message("assistant",`What problem are you seeing on ${asset.id}?`,{actions:problemActions(asset)})}
-    if(action==="problem"){const [assetId,problemId]=value.split("|"),asset=assets[assetId],problem=asset?.problems.find(p=>p.id===problemId);if(!problem)return;message("user",problem.name);return chooseProblem(asset,problem)}
+    if(action==="problem"){const [assetId,problemId]=value.split("|"),asset=assets[assetId],problem=asset?.problems.find(p=>p.id===problemId);if(!problem)return;toggle(false);clearSession(asset.id,problem.id);return setRoute({asset:asset.id,problem:problem.id,step:problem.startStep})}
     if(action==="asset-page"){toggle(false);return setRoute({asset:value})}
     if(action==="system-page"){toggle(false);return setRoute({system:value})}
     if(action==="manual-page"){toggle(false);return setRoute({view:"manual"})}
@@ -154,7 +211,7 @@ const facilityIqChat = (() => {
     return `<article class="chat-message ${item.role}">${item.eyebrow?`<span>${safe(item.eyebrow)}</span>`:""}<div class="chat-bubble">${body}${item.safety?`<div class="chat-safety"><strong>Safety:</strong> ${safe(item.safety)}</div>`:""}</div>${actions}${examples}</article>`;
   }
   function draw(){const log=document.getElementById("chat-log");if(!log)return;log.innerHTML=state.messages.map(markup).join("");log.scrollTop=log.scrollHeight}
-  function reset(){state.messages=[];state.asset=null;state.problem=null;state.stepId=null;try{localStorage.removeItem(storageKey)}catch(_){}message("assistant","Tell me which equipment you’re working on and what it is doing. You can use an asset tag, room, model, alarm, or symptom.",{eyebrow:"FacilityIQ assistant",examples:["AHU-01 has low airflow","York chiller will not start","UPS is on bypass"]})}
+  function reset(){state.messages=[];state.asset=null;state.problem=null;state.stepId=null;try{localStorage.removeItem(storageKey)}catch(_){}message("assistant","Describe the room or equipment issue. I’ll link you directly to the matching troubleshooting guide.",{eyebrow:"FacilityIQ quick route",examples:["Room 144 is too cold","Boiler 03 is not firing","Lab 400 hood has low exhaust"]})}
   function toggle(force){state.open=typeof force==="boolean"?force:!state.open;const panel=document.getElementById("chat-panel"),launcher=document.getElementById("chat-launcher");panel.hidden=!state.open;launcher.setAttribute("aria-expanded",String(state.open));launcher.querySelector(".chat-launcher-label").textContent=state.open?"Close":"Ask FacilityIQ";if(state.open){draw();setTimeout(()=>document.getElementById("chat-input")?.focus(),0)}}
   function mount(){
     document.body.insertAdjacentHTML("beforeend",`<button id="chat-launcher" class="chat-launcher" type="button" aria-controls="chat-panel" aria-expanded="false"><span class="chat-launcher-icon" aria-hidden="true">?</span><span class="chat-launcher-label">Ask FacilityIQ</span></button><section id="chat-panel" class="chat-panel" aria-label="FacilityIQ troubleshooting assistant" hidden><header class="chat-header"><div><span>ONLINE · ON-DEVICE</span><h2>Troubleshooting Assistant</h2></div><div class="chat-header-actions"><button id="chat-reset" type="button">New</button><button id="chat-close" type="button" aria-label="Close assistant">×</button></div></header><div id="chat-log" class="chat-log" role="log" aria-live="polite"></div><form id="chat-form" class="chat-form"><label for="chat-input">Describe the equipment issue</label><div><textarea id="chat-input" rows="2" placeholder="Example: AHU-01 has low airflow"></textarea><button type="submit">Send</button></div><small>Guidance for trained personnel. Follow site procedures, LOTO, and manufacturer instructions.</small></form></section>`);
