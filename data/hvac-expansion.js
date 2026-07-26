@@ -117,6 +117,7 @@ const rtuRows = [
   ["RTU-FRT-LT","York","ZXG12E4B1AA","N1C454589"],["RTU-N","Trane","WSC048H4RO","223612698L"]
 ];
 function rtuManualFor(model){
+  if(/^ZXG12/.test(model))return "manuals/York-ZX-Series-Installation.pdf";
   if(/^48TC|^50TC/.test(model))return "https://carrier.manymanuals.com/heat-pumps/48tca04-a12/user-manual-10735/1";
   if(/^48TJ|^50TJ/.test(model))return "https://www.manualsdir.com/manuals/67677/carrier-48tjd-48tje-tje-tjf005-007-tjf004.html";
   return null;
@@ -142,6 +143,7 @@ const exhaustRows = [
 ];
 function exhaustManual(manufacturer,model){
   if(manufacturer==="Greenheck"&&/^G[B-]/.test(model))return "manuals/Greenheck-G-GB-Roof-Exhaust.pdf";
+  if(manufacturer==="Greenheck"&&/BT5W/.test(model))return "manuals/Greenheck-Tube-Axial-Fans-IOM.pdf";
   if(manufacturer==="Labconco")return "manuals/Labconco-7180600-Blower.pdf";
   if(manufacturer==="Aerovent")return "manuals/Aerovent-BIUB-Centrifugal-Fans.pdf";
   if(manufacturer==="Breidert")return "manuals/Breidert-DB-Blower.pdf";

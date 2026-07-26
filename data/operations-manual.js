@@ -1,7 +1,7 @@
 const facilityOperationsManual = {
   title:"Facility Knowledge Base",
   site:"Cambrex – Durham Site",
-  purpose:"A searchable operating reference built from the facility documents and confirmed FacilityIQ relationships. Use it with approved SOPs, permits, LOTO, training, and manufacturer instructions.",
+  purpose:"A plain-language operating reference built from facility documents, asset records, and confirmed system relationships. Start here to understand what equipment serves, what to check first, and what still needs field confirmation. Always follow approved SOPs, permits, lockout/tagout (LOTO), training, and manufacturer instructions.",
   sources:[
     {name:"Facility Operations Manual – Final",file:"manuals/operations/Facility_Operations_Manual_FINAL.docx",status:"Primary source"},
     {name:"Facilities prompts and draft notes",file:"manuals/operations/Ptompts.A.rtf",status:"Draft source; verify incomplete fields"},
@@ -10,7 +10,7 @@ const facilityOperationsManual = {
   sections:[
     {
       id:"desigo",title:"Building Automation System (Desigo)",category:"Controls",
-      summary:"Desigo is the primary interface for building HVAC, utilities, exhaust, and space-control monitoring.",
+      summary:"Desigo is the building automation system used to see HVAC conditions, commands, alarms, schedules, and trends from one place.",
       facts:["Controls air handlers, chillers, boilers, exhaust fans, unit heaters, temperature control, CAV/VAV systems, utility pumps, and most fume hoods.","Operators can review and trend points and, when authorized, adjust setpoints or overrides.","The source manual identifies Lab 400 fume hoods as an exception to normal Desigo fume-hood control; confirm the current local/control arrangement."],
       operations:["Record current value, setpoint, operating mode, command, feedback, alarm, schedule, and override before changing anything.","Use trends to compare demand, command, physical response, and system result rather than relying on a single snapshot.","Remove temporary overrides after testing and document approved changes."],
       safety:"Never use a software command or displayed feedback as proof that equipment is electrically or mechanically safe.",
@@ -18,31 +18,31 @@ const facilityOperationsManual = {
     },
     {
       id:"ahu",title:"Air Handling Units",category:"HVAC",
-      summary:"Building AHUs provide ventilation, temperature control, and airflow management through Desigo.",
+      summary:"The air handling units (AHUs) move and condition building air. Desigo commands the units, while chilled water, hot water, and pneumatic control air allow the coils and valves to respond.",
       facts:["AHU-01, AHU-02, and AHU-04 are described as having outside-air-temperature-based return-fan setpoint control.","AHU-05 and AHU-06 are described as not using return-fan temperature-based control.","Cooling depends on the chilled-water plant. Pneumatic AHU heating and cooling valves depend on the dedicated Control Air Compressor and dryer.","AHU heating valves are normally open and cooling valves are normally closed."],
       operations:["For a space complaint, begin with occupancy, effective setpoint, sensor accuracy, serving terminal, airflow, damper response, and VAV heating-valve response.","For widespread warm conditions, check chilled-water supply versus active setpoint, secondary-loop DP, and common control-air pressure before investigating every AHU independently.","Verify return-fan reset logic against outside-air temperature for AHU-01, AHU-02, and AHU-04."],
       safety:"Follow LOTO and pressure/temperature precautions before accessing fans, coils, dampers, valves, or ductwork.",
-      verify:["The source manual lists AHU-01 and AHU-02 in Mechanical Room 805 and AHU-04 in 804, while the current asset catalog lists AHU-01/02 in 804 and AHU-04 in 805. Confirm field labels before correcting the catalog.","Confirm the AHU zoning/layout drawing referenced by the source document."]
+      verify:["The current asset list records AHU-01 and AHU-02 in Room 804, AHU-04 and AHU-05 in Room 805, and AHU-06 in Room 182. Older source text conflicts with some of those locations, so confirm the equipment and room labels in the field.","Confirm the AHU zoning/layout drawing referenced by the source document."]
     },
     {
       id:"space-controls",title:"CAV / VAV Space Controls",category:"HVAC",
-      summary:"Each controlled area has a thermostat associated with a dedicated CAV or VAV terminal.",
-      facts:["VAV airflow modulates with demand.","Every VAV has a heating valve.","The source manual describes CAV airflow as constant with temperature controlled through reheat.","HWP-01 and HWP-02 distribute hot water to AHU coils and terminal reheat loads."],
+      summary:"Each controlled room or laboratory has a thermostat and a dedicated terminal. A constant-air-volume (CAV) terminal maintains airflow; a variable-air-volume (VAV) terminal changes airflow with demand.",
+      facts:["VAV means variable air volume: the terminal changes airflow to meet space demand.","Every VAV has a hot-water heating valve for reheat.","CAV means constant air volume: airflow stays generally constant while temperature is adjusted with reheat.","HWP-01 and HWP-02 distribute hot water to AHU coils and terminal reheat loads."],
       operations:["Compare room temperature with the effective heating and cooling setpoints and verify occupancy and overrides.","Compare terminal airflow setpoint with actual airflow and damper command with physical response.","For a VAV heating call, compare valve command with physical position and confirm discharge air warms above inlet air.","For overheating, verify the VAV heating valve closes and produces no unintended temperature rise."],
       safety:"Do not force a terminal damper or heating valve without reviewing ventilation, pressure, hot-water, and room-control requirements.",
       verify:["Record each room’s terminal type, tag, design/minimum airflow, Desigo points, and heating-valve details."]
     },
     {
       id:"chilled-water",title:"Chilled-Water System",category:"Plant",
-      summary:"A primary-secondary chilled-water plant supplies the building AHU cooling coils.",
-      facts:["The source manual identifies a 300-ton Trane chiller as primary and a 400-ton York chiller as secondary.","The York chiller is described as enabling when the Trane exceeds 95% capacity for more than 20 minutes.","Each chiller has a dedicated primary pump; secondary pumps distribute water to the AHUs.","Secondary-pump speed is controlled from chilled-water differential pressure."],
+      summary:"The chilled-water plant removes heat from the building. Each chiller has a dedicated primary pump, while the secondary pumps move chilled water through the building to AHU cooling coils.",
+      facts:["The source manual identifies a 300-ton Trane chiller as primary and a 400-ton York chiller as secondary.","The York chiller is described as enabling when the Trane exceeds 95% capacity for more than 20 minutes.","Each chiller has a dedicated primary pump; secondary pumps distribute water to the AHUs.","Secondary-pump speed is controlled from chilled-water differential pressure (DP), which is the pressure difference between the supply and return sides of the loop."],
       operations:["Compare actual chilled-water supply temperature with the active Desigo setpoint.","Confirm the enabled chiller’s dedicated primary pump and proven evaporator flow.","Check secondary-pump lead/lag status, command, speed, differential pressure, valve lineup, strainers, and air binding.","When staging is suspected, trend Trane capacity and verify the 95%-for-20-minutes condition and York enable."],
       safety:"Follow electrical, refrigerant, rotating-equipment, and pressurized-water procedures. Do not bypass flow or freeze protection.",
       verify:["Confirm current chiller capacities and the approved staging sequence before using the documented 95%/20-minute value as an operating authority."]
     },
     {
       id:"hot-water",title:"Hot-Water System / Heating",category:"Plant",
-      summary:"Four gas boilers and two DP-controlled hot-water pumps serve AHU and terminal heating loads.",
+      summary:"Four gas-fired boilers heat the closed hot-water loop. Two pumps maintain loop differential pressure and deliver hot water to AHU coils and room-terminal reheat valves.",
       facts:["HWP-01 and HWP-02 circulate hot water to AHUs and CAV/VAV reheat loads.","Pump speed is controlled by hot-water differential pressure.","The source manual describes three boilers as lead units and Boiler-04 as the lag boiler enabled when supply temperature drops."],
       operations:["Compare hot-water supply temperature with active setpoint and review boiler enable, firing, alarms, and lead/lag state.","Check HWP command, status, speed, loop DP, isolation valves, strainers, and distribution.","For one cold space, verify the local VAV heating valve and temperature rise before escalating to the plant."],
       safety:"Gas, combustion, flame-safeguard, hot-water, and electrical work requires qualified personnel and approved procedures.",
@@ -50,7 +50,7 @@ const facilityOperationsManual = {
     },
     {
       id:"lab-exhaust",title:"Paired Laboratory and Fume-Hood Exhaust",category:"Laboratory",
-      summary:"Five pairs of roof fans share ductwork and serve grouped laboratory exhaust loads.",
+      summary:"Five paired fan systems exhaust groups of fume hoods through shared ductwork. A problem affecting one hood is usually local; a problem affecting every hood on a pair usually points to the fans, common duct, static-pressure control, or make-up air.",
       facts:["EF-10/11: all fume hoods in Labs 400 and 505.","EF-21/22: all fume hoods in Labs 430 and 440.","EF-25/26: all fume hoods in Labs 415 and 420 plus the sink exhaust in Lab 414.","EF-27/28: all fume hoods in Labs 450 and 460.","EF-30/31: Bio-side laboratory fume hoods and exhaust points.","The source manual describes duct-static control through Desigo with roof dampers modulating as pressure changes."],
       operations:["For a pair-wide complaint, check both fans’ enable, proof, speed, current, faults, rotation, and disconnects, then compare common duct static with setpoint.","If all connected points are affected, check shared controls, static sensor, roof/common dampers, common duct and discharge, make-up air, and simultaneous demand.","If one point is affected, check its hood/sink pickup, sash, alarm, airflow controller, branch damper, sensor, and branch duct.","Verify hood face velocity or approved containment performance before returning a hood to use."],
       safety:"Treat inadequate fume-hood capture as a laboratory safety condition. Follow hood-outage procedures and do not open contaminated ductwork without authorization and PPE.",
@@ -58,7 +58,7 @@ const facilityOperationsManual = {
     },
     {
       id:"fume-hoods",title:"Fume-Hood Controls",category:"Laboratory",
-      summary:"Fume-hood containment is maintained through face-velocity control and a modulating damper above each hood.",
+      summary:"A fume hood protects the user by drawing air inward through the sash opening. Face velocity is the speed of that inward air, and the hood damper modulates to maintain the approved value.",
       facts:["The source manual states that face velocity is maintained at a defined setpoint.","Each hood uses a damper above the unit to modulate airflow.","Most hood control is described as integrated with Desigo, with Lab 400 noted as an exception."],
       operations:["Check sash position, hood alarm, face-velocity actual and setpoint, controller command, damper feedback, local sensor, branch static, and make-up air.","Compare a failing hood with a normal hood on the same paired fan system to separate local and common causes.","Change a face-velocity setpoint only under an approved containment/safety procedure."],
       safety:"Do not silence or bypass a hood alarm as a substitute for verified containment.",
@@ -66,7 +66,7 @@ const facilityOperationsManual = {
     },
     {
       id:"room-503",title:"Room 503 Low-Humidity System",category:"Special Systems",
-      summary:"Room 503 uses a dedicated Bry-Air dehumidifier and rooftop 503 chiller rather than AHU-02.",
+      summary:"Room/Lab 503 is not served by AHU-02. Its dedicated Bry-Air dehumidifier removes moisture, while the rooftop 503 chiller offsets heat added during dehumidification.",
       facts:["The Aircon Tech / MultiAqua chiller model is MAC-060HE-03 and provides dedicated cooling as the dehumidifier adds heat while removing moisture.","Draft notes identify the Bry-Air unit as model MP-900, located above the hallway ceiling in front of Lab 503.","The room terminal is identified in the draft as TEC-503.","The draft calls for quarterly preventive maintenance and operational checks on both components."],
       operations:["Check humidity and temperature actual versus setpoint, Bry-Air status, process and reactivation airflow, rotor rotation, reactivation heat, and alarms.","Verify the 503 chiller enable, leaving-water temperature, flow, cooling-valve response, and coil performance.","Use dew point or moisture-content measurements when evaluating dehumidification performance."],
       safety:"Follow electrical, refrigerant, hot-surface, rotating-equipment, and ceiling-access procedures.",
@@ -74,7 +74,7 @@ const facilityOperationsManual = {
     },
     {
       id:"compressed-air",title:"Compressed-Air Systems",category:"Utilities",
-      summary:"The facility has separate AHU pneumatic control air and laboratory compressed-air services.",
+      summary:"The facility has two different compressed-air systems. Control air operates AHU pneumatic valves. House air supplies laboratory users. Troubleshoot them as separate systems.",
       facts:["The dedicated Control Air Compressor and dryer supply pneumatic control air to AHU heating and cooling valves.","House Air Compressors 01–03 supply laboratory compressed-air demand and do not control AHU valves.","Each House Air Compressor has its own dedicated refrigerated air dryer: 01 to 01, 02 to 02, and 03 to 03.","Draft notes describe a low-pressure backup arrangement at approximately 30 PSI and mention pneumatic fume-hood actuators."],
       operations:["For AHU valve problems, check Control-AC, dryer, receiver/header pressure, regulators, isolation valves, tubing, branch pressure, and actuator response.","For low laboratory air pressure, check the active House Air Compressor and its dedicated air dryer, receiver/header pressure, pressure drop, demand, drains, regulators, isolation valves, and leaks.","For wet laboratory air, verify the serving dryer refrigeration circuit, condenser airflow, separator, automatic drain, filters, bypass position, and outlet dew point.","Keep AHU control-air and laboratory-air diagnoses separate unless an approved cross-connect/backup arrangement is confirmed."],
       safety:"Isolate and depressurize before pneumatic service. Do not defeat valve or damper fail-safe operation.",
@@ -82,7 +82,7 @@ const facilityOperationsManual = {
     },
     {
       id:"generator-ups",title:"Emergency Generator and UPS",category:"Critical Power",
-      summary:"The generator supports selected critical loads while the UPS bridges outages and transfers to generator-backed power.",
+      summary:"The UPS carries protected loads immediately when utility power fails. The emergency generator then starts and the transfer switches move approved loads to generator power.",
       facts:["The source manual describes a Cummins 500 kW generator with a 1,200-gallon fuel tank.","Listed generator-supported loads include stability chambers, UPS systems, BAS, exhaust fans, and lighting.","The source states that boilers, chillers, and AHUs are not generator-supported.","The Eaton UPS is described as 200 kW with approximately 40 minutes of current runtime if the generator does not start."],
       operations:["During an outage, confirm UPS transfer to battery, generator start and stabilization, ATS transfer, UPS return to acceptable input, and battery recharge.","Prioritize supported critical loads and monitor UPS runtime, load, alarms, temperature, and battery condition.","Do not expect boilers, chillers, or AHUs to run on emergency power unless the electrical one-line confirms otherwise."],
       safety:"Generator, ATS, UPS, and distribution equipment contain lethal energy and may remain energized from multiple sources.",
@@ -90,7 +90,7 @@ const facilityOperationsManual = {
     },
     {
       id:"rtu",title:"Roof-Top Units",category:"HVAC",
-      summary:"Draft notes identify 16 gas-fired roof-top units serving office and support areas.",
+      summary:"Sixteen packaged roof-top units (RTUs) provide heating, cooling, and ventilation to office and support areas. The Room 258 Liebert is a separate precision-cooling unit.",
       facts:["Most are described as serving Biology-side offices.","Chemistry-side RTUs are described as serving the break room, QA offices, 700 offices, and Q1 area.","Draft preventive maintenance frequency is every six months, including filters and operational checks."],
       operations:["For no cooling/heating, verify thermostat demand, schedule, power, safeties, fan, filters, airflow, gas heat or refrigeration sequence, and alarms.","Record each RTU tag, served area, manufacturer, model, capacity, thermostat, filter size, and control points."],
       safety:"Use roof fall protection, LOTO, gas, combustion, refrigerant, and electrical procedures.",
