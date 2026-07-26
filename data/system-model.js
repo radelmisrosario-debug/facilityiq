@@ -80,22 +80,27 @@ const facilitySystems={
     ]
   },
   labAir:{
-    id:"labAir",name:"Laboratory Compressed-Air System",description:"House Air Compressors 01–03 and their distribution serving laboratory compressed-air demand.",
+    id:"labAir",name:"Laboratory Compressed-Air System",description:"Three House Air Compressor and dedicated air-dryer trains serving laboratory compressed-air demand.",
     notes:[
       "House Air Compressors 01, 02, and 03 supply compressed air to the laboratories.",
+      "Each House Air Compressor has a dedicated refrigerated air dryer: Compressor 01 to Dryer 01, Compressor 02 to Dryer 02, and Compressor 03 to Dryer 03.",
       "This system is separate from the dedicated AHU pneumatic control-air system.",
       "A laboratory air-pressure complaint should be diagnosed here, not at Control-AC."
     ],
     nodes:[
-      {id:"House-AC-01",label:"House Air Compressor 01",sub:"Room 805",type:"pump",asset:"House-AC-01",x:20,y:22},
-      {id:"House-AC-02",label:"House Air Compressor 02",sub:"Room 805",type:"pump",asset:"House-AC-02",x:50,y:22},
-      {id:"House-AC-03",label:"House Air Compressor 03",sub:"Room 182",type:"pump",asset:"House-AC-03",x:80,y:22},
-      {id:"LAB-AIR-HEADER",label:"Laboratory Air Header",sub:"Receivers / distribution / regulators",type:"header",x:50,y:55},
-      {id:"LAB-AIR-USERS",label:"Laboratory Air Users",sub:"Lab compressed-air outlets and equipment",type:"load",x:50,y:82}
+      {id:"House-AC-01",label:"House Air Compressor 01",sub:"Room 805",type:"pump",asset:"House-AC-01",x:18,y:14},
+      {id:"House-AC-02",label:"House Air Compressor 02",sub:"Room 805",type:"pump",asset:"House-AC-02",x:50,y:14},
+      {id:"House-AC-03",label:"House Air Compressor 03",sub:"Room 182",type:"pump",asset:"House-AC-03",x:82,y:14},
+      {id:"House-AC-Air-Dryer-01",label:"House Air Dryer 01",sub:"Atlas Copco FX 7 · Room 805",type:"load",asset:"House-AC-Air-Dryer-01",x:18,y:39},
+      {id:"House-AC-Air-Dryer-02",label:"House Air Dryer 02",sub:"Nano DXR0105N · Room 805",type:"load",asset:"House-AC-Air-Dryer-02",x:50,y:39},
+      {id:"House-AC-Air-Dryer-03",label:"House Air Dryer 03",sub:"Speedaire 3YA50A · Room 182",type:"load",asset:"House-AC-Air-Dryer-03",x:82,y:39},
+      {id:"LAB-AIR-HEADER",label:"Laboratory Air Header",sub:"Receivers / distribution / regulators",type:"header",x:50,y:66},
+      {id:"LAB-AIR-USERS",label:"Laboratory Air Users",sub:"Lab compressed-air outlets and equipment",type:"load",x:50,y:88}
     ],
-    links:[["House-AC-01","LAB-AIR-HEADER"],["House-AC-02","LAB-AIR-HEADER"],["House-AC-03","LAB-AIR-HEADER"],["LAB-AIR-HEADER","LAB-AIR-USERS"]],
+    links:[["House-AC-01","House-AC-Air-Dryer-01"],["House-AC-Air-Dryer-01","LAB-AIR-HEADER"],["House-AC-02","House-AC-Air-Dryer-02"],["House-AC-Air-Dryer-02","LAB-AIR-HEADER"],["House-AC-03","House-AC-Air-Dryer-03"],["House-AC-Air-Dryer-03","LAB-AIR-HEADER"],["LAB-AIR-HEADER","LAB-AIR-USERS"]],
     commonSymptoms:[
-      {name:"Low laboratory air pressure",checks:["Check laboratory header pressure and demand.","Verify the enabled House Air Compressor status, cut-in/cut-out operation, receiver pressure, and capacity.","Inspect open drains, large users, regulators, isolation valves, and distribution leaks.","Do not troubleshoot Control-AC for a laboratory compressed-air pressure complaint."]},
+      {name:"Low laboratory air pressure",checks:["Check laboratory header pressure and demand.","Verify the enabled House Air Compressor status, cut-in/cut-out operation, receiver pressure, and capacity.","Check the dedicated air dryer for an isolation, restriction, freeze-up, blocked filter, failed drain, or high pressure drop.","Inspect open drains, large users, regulators, isolation valves, and distribution leaks.","Do not troubleshoot Control-AC for a laboratory compressed-air pressure complaint."]},
+      {name:"Water or high dew point in laboratory air",checks:["Identify which compressor/dryer train is serving the header.","Verify the dedicated dryer is powered, enabled, and operating without alarm.","Check inlet temperature and pressure, condenser airflow, separator and automatic drain operation, filters, bypass position, and outlet dew point.","Confirm House Air Dryer 01 is paired with Compressor 01, Dryer 02 with Compressor 02, and Dryer 03 with Compressor 03."]},
       {name:"One laboratory has low air pressure",checks:["Compare local lab pressure with the main laboratory air header.","Check the local isolation valve, regulator, filter, hose, branch piping, and connected demand.","If header pressure is also low, continue at the House Air Compressors."]}
     ]
   },
