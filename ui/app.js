@@ -17,7 +17,7 @@ const assetFamilies=[
   {id:"pumps",name:"Hydronic Pumps",short:"P",description:"Primary, secondary, chilled-water, and hot-water pumps",match:a=>a.category.includes("Pump")},
   {id:"power",name:"Power & Emergency Systems",short:"PWR",description:"Generator and critical-power equipment",match:a=>a.category.includes("Power")||a.category.includes("UPS")||a.category.includes("Generator")},
   {id:"roof-top-units",name:"Roof Top Units",short:"RTU",description:"Packaged rooftop heating and cooling units",match:a=>a.id.startsWith("RTU-")||a.category.includes("Roof Top Unit")},
-  {id:"vacuum-pumps",name:"Vacuum Pumps",short:"VAC",description:"Biology- and Chemistry-side laboratory vacuum pumps",match:a=>a.category.includes("Vacuum Pump")}
+  {id:"vacuum-pumps",name:"Vacuum Pumps",short:"VACP",description:"All VACP assets: Biology- and Chemistry-side laboratory vacuum pumps",match:a=>a.id.includes("VACP")||a.category.includes("Vacuum Pump")}
 ];
 function familyForAsset(asset){return assetFamilies.find(family=>family.match(asset))||{id:"other",name:"Other Equipment",short:"EQ",description:"Specialty facility equipment"}}
 
@@ -34,16 +34,6 @@ function renderHome(){
         <button type="button" class="secondary-button" id="hero-ask-button">Ask FacilityIQ</button>
       </div>
     </div>
-    <aside class="hero-status" aria-label="FacilityIQ capabilities">
-      <span class="hero-status-label">OPERATIONAL WORKSPACE</span>
-      <strong>One source of truth</strong>
-      <ul>
-        <li><b>Asset-level</b><span>Guided diagnostics</span></li>
-        <li><b>System-level</b><span>Connected equipment</span></li>
-        <li><b>Field-ready</b><span>Manuals, evidence & parts</span></li>
-      </ul>
-      <small>Powered by facility knowledge</small>
-    </aside>
   </section>
   <div class="launch-section-heading"><span>CHOOSE A WORKFLOW</span><h2>What do you need to do?</h2></div>
   <div class="launch-grid">
@@ -86,22 +76,32 @@ function renderOperationsManual(){
   const categories=["All",...new Set(facilityOperationsManual.sections.map(section=>section.category))];
   let activeCategory="All";
   app.innerHTML=`<div class="manual-hero result-card"><span class="status">FACILITY KNOWLEDGE</span><h2>Understand the system. Check the right things first.</h2><p>${esc(facilityOperationsManual.purpose)}</p></div>
+  <nav class="knowledge-category-menu" aria-label="Knowledge base categories">
+    ${categories.map(category=>{const count=category==="All"?facilityOperationsManual.sections.length:facilityOperationsManual.sections.filter(section=>section.category===category).length;return `<button type="button" data-manual-category-card="${esc(category)}" class="${category==="All"?"active":""}"><span>${category==="All"?"KB":esc(category.split(/\s+/).map(word=>word[0]).join("").slice(0,3).toUpperCase())}</span><strong>${esc(category==="All"?"All topics":category)}</strong><small>${count} section${count===1?"":"s"}</small></button>`}).join("")}
+  </nav>
   <section class="manual-controls" aria-label="Manual navigation">
-    <label class="manual-search-label" for="manual-search">Search the manual</label>
+    <label class="manual-search-label" for="manual-search">Search facility knowledge</label>
     <input id="manual-search" class="search" placeholder="Try “chiller staging,” “fume hood,” “Room 503,” or “generator”" />
     <div class="manual-filters" role="group" aria-label="Filter manual by category">${categories.map(category=>`<button type="button" data-manual-category="${esc(category)}" class="${category==="All"?"active":""}">${esc(category)}</button>`).join("")}</div>
   </section>
-  <div class="manual-layout"><aside class="manual-toc" aria-label="On this page"><strong>On this page</strong><nav id="manual-toc"></nav></aside><main id="manual-results" class="manual-results"></main></div>`;
+  <div class="manual-layout"><aside class="manual-toc" aria-label="Topics in view"><strong>Topics in view</strong><p>Select a topic to jump directly to it.</p><nav id="manual-toc"></nav></aside><main id="manual-results" class="manual-results"></main></div>`;
   const input=document.getElementById("manual-search"),results=document.getElementById("manual-results"),toc=document.getElementById("manual-toc");
   function drawManual(){
     const query=input.value.trim().toLowerCase();
     const sections=facilityOperationsManual.sections.filter(section=>(activeCategory==="All"||section.category===activeCategory)&&[section.title,section.category,section.summary,...section.facts,...section.operations,section.safety,...section.verify].join(" ").toLowerCase().includes(query));
     toc.innerHTML=sections.map(section=>`<button type="button" data-manual-jump="${esc(section.id)}"><span>${esc(section.category)}</span>${esc(section.title)}</button>`).join("");
-    results.innerHTML=sections.length?sections.map((section,index)=>`<article class="manual-section" id="manual-${esc(section.id)}"><div class="manual-section-head"><span>${esc(section.category)}</span><h3>${esc(section.title)}</h3><p>${esc(section.summary)}</p></div><div class="manual-section-body"><section><h4>System operation</h4><ul>${section.facts.map(item=>`<li>${esc(item)}</li>`).join("")}</ul></section><section><h4>Operating and field checks</h4><ol>${section.operations.map(item=>`<li>${esc(item)}</li>`).join("")}</ol></section><div class="manual-safety"><strong>Safety requirements</strong><p>${esc(section.safety)}</p></div>${section.verify.length?`<details class="manual-verify"${index===0?" open":""}><summary>Field verification and record control</summary><ul>${section.verify.map(item=>`<li>${esc(item)}</li>`).join("")}</ul></details>`:""}</div></article>`).join(""):`<div class="result-card manual-empty"><h2>No matching section</h2><p>Clear the category filter or try a shorter search such as “AHU,” “boiler,” “exhaust,” or “PM.”</p><button type="button" id="manual-clear" class="secondary-button">Clear filters</button></div>`;
-    toc.querySelectorAll("[data-manual-jump]").forEach(button=>button.onclick=()=>document.getElementById(`manual-${button.dataset.manualJump}`)?.scrollIntoView({behavior:"smooth",block:"start"}));
-    const clear=document.getElementById("manual-clear");if(clear)clear.onclick=()=>{activeCategory="All";input.value="";app.querySelectorAll("[data-manual-category]").forEach(button=>button.classList.toggle("active",button.dataset.manualCategory==="All"));drawManual()};
+    results.innerHTML=sections.length?sections.map((section,index)=>`<details class="manual-section" id="manual-${esc(section.id)}"${index===0||query?" open":""}><summary class="manual-section-head"><span>${esc(section.category)}</span><h3>${esc(section.title)}</h3><p>${esc(section.summary)}</p><b aria-hidden="true">+</b></summary><div class="manual-section-body"><section><h4>How the system operates</h4><ul>${section.facts.map(item=>`<li>${esc(item)}</li>`).join("")}</ul></section><section><h4>Operating and field checks</h4><ol>${section.operations.map(item=>`<li>${esc(item)}</li>`).join("")}</ol></section><div class="manual-safety"><strong>Safety requirements</strong><p>${esc(section.safety)}</p></div>${section.verify.length?`<details class="manual-verify"><summary>Items to verify in the field</summary><ul>${section.verify.map(item=>`<li>${esc(item)}</li>`).join("")}</ul></details>`:""}</div></details>`).join(""):`<div class="result-card manual-empty"><h2>No matching section</h2><p>Clear the category filter or try a shorter search such as “AHU,” “boiler,” “exhaust,” or “PM.”</p><button type="button" id="manual-clear" class="secondary-button">Clear filters</button></div>`;
+    toc.querySelectorAll("[data-manual-jump]").forEach(button=>button.onclick=()=>{const section=document.getElementById(`manual-${button.dataset.manualJump}`);if(section){section.open=true;section.scrollIntoView({behavior:"smooth",block:"start"})}});
+    const clear=document.getElementById("manual-clear");if(clear)clear.onclick=()=>{input.value="";selectKnowledgeCategory("All")};
   }
-  app.querySelectorAll("[data-manual-category]").forEach(button=>button.onclick=()=>{activeCategory=button.dataset.manualCategory;app.querySelectorAll("[data-manual-category]").forEach(item=>item.classList.toggle("active",item===button));drawManual()});
+  function selectKnowledgeCategory(category){
+    activeCategory=category;
+    app.querySelectorAll("[data-manual-category]").forEach(item=>item.classList.toggle("active",item.dataset.manualCategory===category));
+    app.querySelectorAll("[data-manual-category-card]").forEach(item=>item.classList.toggle("active",item.dataset.manualCategoryCard===category));
+    drawManual();
+  }
+  app.querySelectorAll("[data-manual-category]").forEach(button=>button.onclick=()=>selectKnowledgeCategory(button.dataset.manualCategory));
+  app.querySelectorAll("[data-manual-category-card]").forEach(button=>button.onclick=()=>{selectKnowledgeCategory(button.dataset.manualCategoryCard);document.querySelector(".manual-controls").scrollIntoView({behavior:"smooth",block:"start"})});
   input.oninput=drawManual;drawManual();
 }
 

@@ -34,20 +34,20 @@ function facilityIqInventoryPartsForResult(asset,result){
 }
 
 function facilityIqPartSearchUrl(part){
-  const query=(part.source==="manual"?[part.searchContext,part.name,"replacement part"]:[part.name,part.type,part.partNumbers,part.description]).filter(Boolean).join(" ");
+  const query=(part.source==="manual"||part.source==="planning"?[part.searchContext,part.name,"replacement part"]:[part.name,part.type,part.partNumbers,part.description]).filter(Boolean).join(" ");
   return `https://www.google.com/search?q=${encodeURIComponent(query)}`;
 }
 
 function facilityIqPartCardMarkup(part){
   const price=part.unitCost?`Price: $${Number(part.unitCost).toFixed(2)}`:"Price not recorded";
-  const source=part.source==="manual"?"MANUAL-LISTED PART":"FACILITY PART";
-  return `<article class="inventory-part ${part.source==="manual"?"manual-listed-part":""}"><div><span class="asset-id">${source}</span><h4>${esc(part.name||part.type||"Unnamed part")}</h4><p>${esc(part.description||"No description recorded.")}</p><strong>${esc(price)}</strong></div><div class="inventory-part-actions"><a class="manual-button" href="${esc(facilityIqPartSearchUrl(part))}" target="_blank" rel="noopener">Search part on Google</a>${part.source==="manual"&&part.manual?`<a class="secondary-button parts-link" href="${esc(part.manual)}" target="_blank" rel="noopener">View source manual</a>`:""}</div></article>`;
+  const source=part.source==="manual"?"MANUAL-IDENTIFIED PART":part.source==="planning"?"SERVICE-PLANNING ITEM":"FACILITY INVENTORY PART";
+  return `<article class="inventory-part ${part.source==="manual"?"manual-listed-part":part.source==="planning"?"planning-part":""}"><div><span class="asset-id">${source}</span><h4>${esc(part.name||part.type||"Unnamed part")}</h4><p>${esc(part.description||"No description recorded.")}</p><strong>${esc(price)}</strong></div><div class="inventory-part-actions"><a class="manual-button" href="${esc(facilityIqPartSearchUrl(part))}" target="_blank" rel="noopener">Search part on Google</a>${part.source==="manual"&&part.manual?`<a class="secondary-button parts-link" href="${esc(part.manual)}" target="_blank" rel="noopener">View source manual</a>`:""}</div></article>`;
 }
 
 function facilityIqAssetPartsMarkup(asset){
   const parts=facilityIqPartsForAsset(asset.id);
   if(!parts.length)return "";
-  return `<section id="asset-parts-panel" class="asset-parts" hidden><div class="asset-parts-heading"><h3>Associated replacement parts</h3><span>${parts.length} part record${parts.length===1?"":"s"}</span></div><p class="small-note">Facility parts come from your supplied list. Manual-listed parts come from manufacturer parts diagrams and require exact model, configuration, and serial verification. Prices are shown only when supplied.</p><div class="inventory-parts">${parts.map(facilityIqPartCardMarkup).join("")}</div></section>`;
+  return `<section id="asset-parts-panel" class="asset-parts" hidden><div class="asset-parts-heading"><h3>Parts and service components</h3><span>${parts.length} record${parts.length===1?"":"s"}</span></div><div class="parts-source-legend"><span><i class="facility-source"></i>Facility inventory</span><span><i class="manual-source"></i>Manual identified</span><span><i class="planning-source"></i>Service planning</span></div><p class="small-note">Facility inventory records come from your supplied list. Manual-identified components come from the equipment-family service literature. Service-planning items are common candidates for that equipment type. Verify the installed model, serial number, ratings, dimensions, and removed component before ordering. Prices appear only when supplied.</p><div class="inventory-parts">${parts.map(facilityIqPartCardMarkup).join("")}</div></section>`;
 }
 
 function facilityIqAssetPartsButtonMarkup(asset){
