@@ -40,19 +40,12 @@ function renderHome(){
       <p>Search operating sequences, system relationships, preventive-maintenance intervals, safety notes, and items that still need field verification.</p>
       <span class="launch-link">Explore knowledge base <b>→</b></span>
     </button>
-    <button class="launch-card manual-library-launch" id="asset-manuals-button">
-      <span class="launch-number">05</span><span class="launch-type">EQUIPMENT DOCUMENTATION</span>
-      <h2>Asset Manual Library</h2>
-      <p>Find manufacturer manuals by asset tag, equipment name, manufacturer, model, or equipment category.</p>
-      <span class="launch-link">Search asset manuals <b>→</b></span>
-    </button>
   </div>
   <p class="launch-safety"><strong>Work safely.</strong> FacilityIQ supports trained personnel and does not replace LOTO, permits, site procedures, or manufacturer instructions.</p>`;
   document.getElementById("assets-button").onclick=()=>setRoute({view:"assets"});
   document.getElementById("systems-button").onclick=()=>setRoute({view:"systems"});
   document.getElementById("assistant-button").onclick=()=>facilityIqChat.toggle(true);
   document.getElementById("manual-button").onclick=()=>setRoute({view:"manual"});
-  document.getElementById("asset-manuals-button").onclick=()=>setRoute({view:"asset-manuals"});
 }
 
 function renderOperationsManual(){
@@ -79,27 +72,6 @@ function renderOperationsManual(){
   input.oninput=drawManual;drawManual();
 }
 
-function renderAssetManualLibrary(){
-  pageTitle.textContent="Asset Manual Library";
-  homeButton.hidden=false;
-  app.innerHTML=`<div class="section-intro"><span class="status">EQUIPMENT DOCUMENTATION</span><h2>Find an asset manual</h2><p>Search by asset tag, equipment name, manufacturer, model, or category.</p></div>
-  <div class="toolbar"><input id="manual-library-search" class="search" placeholder="Try AHU, Boiler 03, Mitsubishi, RTU, or exhaust fan..." /></div>
-  <div class="manual-library-summary"><strong id="manual-library-count"></strong><span>Availability reflects the documents currently uploaded to FacilityIQ.</span></div>
-  <div id="manual-library-grid" class="card-grid"></div>`;
-  const input=document.getElementById("manual-library-search");
-  const grid=document.getElementById("manual-library-grid");
-  const count=document.getElementById("manual-library-count");
-  function drawLibrary(){
-    const query=input.value.trim().toLowerCase();
-    const list=Object.values(assets).filter(asset=>[asset.id,asset.name,asset.category,asset.manufacturer,asset.model].join(" ").toLowerCase().includes(query)).sort(assetAlphabeticalCompare);
-    count.textContent=`${list.length} assets · ${list.filter(asset=>asset.manual).length} manuals available`;
-    grid.innerHTML=list.length?list.map(asset=>`<article class="card manual-library-card"><span class="asset-id">${esc(asset.id)}</span><h2>${esc(asset.name)}</h2><p class="meta"><strong>${esc(asset.manufacturer)}</strong><br>${esc(asset.model)}<br>${esc(asset.category)}</p>${asset.manual?`<a class="manual-button" href="${esc(asset.manual)}" target="_blank" rel="noopener">Open Manufacturer Manual</a>`:`<span class="manual-unavailable">Manual not uploaded yet</span>`}<button type="button" class="text-button" data-library-asset="${esc(asset.id)}">View asset troubleshooting</button></article>`).join(""):`<div class="result-card"><h2>No matching asset</h2><p>Try a shorter asset tag, manufacturer, model, or equipment type.</p></div>`;
-    grid.querySelectorAll("[data-library-asset]").forEach(button=>button.onclick=()=>setRoute({asset:button.dataset.libraryAsset}));
-  }
-  input.oninput=drawLibrary;
-  drawLibrary();
-}
-
 function renderAssetsHome(){
   pageTitle.textContent="Asset Troubleshooting";
   homeButton.hidden=false;
@@ -109,7 +81,7 @@ function renderAssetsHome(){
   function draw(){
     const q=input.value.trim().toLowerCase();
     const list=Object.values(assets).filter(a=>[a.id,a.name,a.category,a.manufacturer,a.model,a.location,...facilityIqRoomsForAsset(a.id).flatMap(room=>[`room ${room}`,`lab ${room}`,`laboratory ${room}`]),...a.problems.flatMap(p=>[p.name,p.description])].join(" ").toLowerCase().includes(q)).sort(assetAlphabeticalCompare);
-    grid.innerHTML=list.map(a=>`<button class="card" data-asset="${esc(a.id)}"><span class="asset-id">${esc(a.id)}</span><h2>${esc(a.name)}</h2><p class="meta">${esc(a.category)}<br>${esc(a.location)}</p></button>`).join("");
+    grid.innerHTML=list.map(a=>{const manualStatus=facilityIqManualStatus(a);return `<article class="card asset-list-card"><span class="asset-id">${esc(a.id)}</span><h2>${esc(a.name)}</h2><dl class="asset-details"><div><dt>Make</dt><dd>${esc(a.manufacturer||"To be confirmed")}</dd></div><div><dt>Model</dt><dd>${esc(a.model||"To be confirmed")}</dd></div><div><dt>Location</dt><dd>${esc(a.location||"To be confirmed")}</dd></div></dl><div class="asset-card-actions"><button type="button" class="primary-button" data-asset="${esc(a.id)}">Troubleshoot</button>${a.manual?`<a class="manual-button" href="${esc(a.manual)}" target="_blank" rel="noopener">Open manual</a>`:`<span class="manual-unavailable">${esc(manualStatus.label)}</span>`}</div>${a.manualNote?`<p class="small-note asset-manual-note">${esc(a.manualNote)}</p>`:""}</article>`}).join("");
     grid.querySelectorAll("[data-asset]").forEach(b=>b.onclick=()=>setRoute({asset:b.dataset.asset}));
   }
   input.oninput=draw; draw();
@@ -249,14 +221,14 @@ function renderStep(asset,problem,stepId){
   if(s.type==="question"){
     const answered=data.answers.length;
     const progress=Math.min(90,Math.max(12,answered*22+12));
-    app.innerHTML=`<div class="result-card question-card"><div class="step-topline"><span class="status">${esc(asset.id)}</span><span class="step-count">${answered+1} diagnostic check${answered===0?"":"s"}</span></div><div class="progress-track" aria-label="Diagnosis progress"><div class="progress-fill" style="width:${progress}%"></div></div><div class="progress-label">Guided troubleshooting</div><h2>${esc(s.text)}</h2><div class="warning"><strong>Safety:</strong> ${esc(s.safety)}</div><div class="button-row"><button id="yes" class="answer-button">Yes</button><button id="no" class="answer-button">No</button></div><button id="asset-back" class="text-button">Back to ${esc(asset.id)} symptoms</button></div>`;
+    app.innerHTML=`<div class="result-card question-card"><div class="step-topline"><span class="status">${esc(asset.id)}</span><span class="step-count">${answered+1} diagnostic check${answered===0?"":"s"}</span></div><div class="progress-track" aria-label="Diagnosis progress"><div class="progress-fill" style="width:${progress}%"></div></div><div class="progress-label">Guided troubleshooting</div><h2>${esc(s.text)}</h2><div class="warning"><strong>Safety:</strong> ${esc(s.safety)}</div><details class="question-reference"><summary>View manual and facility checks</summary>${facilityIqManualContextMarkup(asset,"Checks that apply to this asset")}</details><div class="button-row"><button id="yes" class="answer-button">Yes</button><button id="no" class="answer-button">No</button></div><button id="asset-back" class="text-button">Back to ${esc(asset.id)} symptoms</button></div>`;
     document.getElementById("yes").onclick=()=>{recordAnswer(asset,problem,stepId,s.text,"YES");setRoute({asset:asset.id,problem:problem.id,step:s.yes})};
     document.getElementById("no").onclick=()=>{recordAnswer(asset,problem,stepId,s.text,"NO");setRoute({asset:asset.id,problem:problem.id,step:s.no})};
     document.getElementById("asset-back").onclick=()=>setRoute({asset:asset.id});
   } else {
     const manual=asset.manual?`<a class="manual-button" href="${asset.manual}" target="_blank" rel="noopener">Open Manufacturer Manual</a>`:"";
     const checks=data.answers.length?`<div class="checks"><h3>Checks completed</h3>${data.answers.map(x=>`<div class="check-row"><span class="${x.answer==="YES"?"check-yes":"check-no"}">${esc(x.answer)}</span><p>${esc(x.question)}</p></div>`).join("")}</div>`:"";
-    app.innerHTML=`<div class="result-card result-final"><div class="progress-track"><div class="progress-fill" style="width:100%"></div></div><span class="status">GUIDED DIAGNOSTIC RESULT</span><h2>${esc(s.title)}</h2><p><strong>Likely cause:</strong><br>${esc(s.cause)}</p><p><strong>Recommended action:</strong><br>${esc(s.action)}</p><div class="warning"><strong>Safety:</strong> ${esc(s.safety)}</div>${checks}${renderUnifiedDiagnosis(asset,problem,s,data)}<div class="button-row"><button id="copy-summary" class="primary-button">Copy Troubleshooting Summary</button><button id="restart" class="secondary-button">Restart Guide</button></div><button id="back" class="text-button">Back to ${esc(asset.id)}</button><div class="manual-wrap">${manual}</div></div>`;
+    app.innerHTML=`<div class="result-card result-final"><div class="progress-track"><div class="progress-fill" style="width:100%"></div></div><span class="status">GUIDED DIAGNOSTIC RESULT</span><h2>${esc(s.title)}</h2><p><strong>Likely cause:</strong><br>${esc(s.cause)}</p><p><strong>Recommended action:</strong><br>${esc(s.action)}</p><div class="warning"><strong>Safety:</strong> ${esc(s.safety)}</div>${facilityIqManualContextMarkup(asset,"Repair planning for this result")}${checks}${renderUnifiedDiagnosis(asset,problem,s,data)}<div class="button-row"><button id="copy-summary" class="primary-button">Copy Troubleshooting Summary</button><button id="restart" class="secondary-button">Restart Guide</button></div><button id="back" class="text-button">Back to ${esc(asset.id)}</button><div class="manual-wrap">${manual}</div></div>`;
     bindUnifiedDiagnosis(asset,problem);
     document.getElementById("copy-summary").onclick=e=>copyText(troubleshootingSummary(asset,problem,s),e.currentTarget);
     document.getElementById("restart").onclick=()=>{clearSession(asset.id,problem.id);setRoute({asset:asset.id,problem:problem.id,step:problem.startStep})};
@@ -264,7 +236,7 @@ function renderStep(asset,problem,stepId){
   }
 }
 function render(){
-  const r=getRoute();if(r.system){const s=facilitySystems[r.system];return s?renderSystem(s):renderSystemsHome();}if(r.view==="manual")return renderOperationsManual();if(r.view==="asset-manuals")return renderAssetManualLibrary();if(r.view==="systems")return renderSystemsHome();if(r.view==="assets")return renderAssetsHome();if(!r.asset)return renderHome();
+  const r=getRoute();if(r.system){const s=facilitySystems[r.system];return s?renderSystem(s):renderSystemsHome();}if(r.view==="manual")return renderOperationsManual();if(r.view==="systems")return renderSystemsHome();if(r.view==="assets")return renderAssetsHome();if(!r.asset)return renderHome();
   const a=assets[r.asset];if(!a)return renderHome();
   if(!r.problem||!r.step)return renderAsset(a);
   const p=a.problems.find(x=>x.id===r.problem);if(!p)return renderAsset(a);
