@@ -41,5 +41,10 @@ function facilityIqPartCardMarkup(part){
 function facilityIqAssetPartsMarkup(asset){
   const parts=facilityIqPartsForAsset(asset.id);
   if(!parts.length)return "";
-  return `<details class="asset-parts"><summary>Associated replacement parts (${parts.length})</summary><p class="small-note">Parts associated with this asset. Confirm the installed component and specifications before use.</p><div class="inventory-parts">${parts.map(facilityIqPartCardMarkup).join("")}</div></details>`;
+  return `<section id="asset-parts-panel" class="asset-parts" hidden><div class="asset-parts-heading"><h3>Associated replacement parts</h3><span>${parts.length} part record${parts.length===1?"":"s"}</span></div><p class="small-note">Parts associated with this asset. Confirm the installed component and specifications before use.</p><div class="inventory-parts">${parts.map(facilityIqPartCardMarkup).join("")}</div></section>`;
+}
+
+function facilityIqAssetPartsButtonMarkup(asset){
+  const count=facilityIqPartsForAsset(asset.id).length;
+  return count?`<button type="button" id="asset-parts-button" class="parts-button" aria-expanded="false" aria-controls="asset-parts-panel">View Parts (${count})</button>`:"";
 }
