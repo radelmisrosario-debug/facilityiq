@@ -20,6 +20,53 @@ const assetFamilies=[
   {id:"vacuum-pumps",name:"Vacuum Pumps",short:"VACP",description:"All VACP assets: Biology- and Chemistry-side laboratory vacuum pumps",match:a=>a.id.includes("VACP")||a.category.includes("Vacuum Pump")}
 ];
 function familyForAsset(asset){return assetFamilies.find(family=>family.match(asset))||{id:"other",name:"Other Equipment",short:"EQ",description:"Specialty facility equipment"}}
+function facilityIqRelationshipsForAsset(assetId){
+  const asset=assets[assetId],rooms=new Set(facilityIqRoomsForAsset(assetId)),relatedIds=new Set(),systems=new Map();
+  if(!asset)return {rooms:[],assets:[],systems:[]};
+  const directSystems=Object.values(facilitySystems).filter(system=>system.nodes.some(node=>node.asset===assetId));
+  const inferredSystems=asset.category==="Air Handling Unit"?[facilitySystems.chilledWater,facilitySystems.hotWater,facilitySystems.controlAir].filter(Boolean):[];
+  [...new Map([...directSystems,...inferredSystems].map(system=>[system.id,system])).values()].forEach(system=>{
+    systems.set(system.id,system);
+    if(system.id!=="laboratoryExhaust")system.nodes.map(node=>node.asset).filter(Boolean).forEach(id=>{if(id!==assetId)relatedIds.add(id)});
+  });
+  rooms.forEach(room=>{
+    facilityIqAhusForRoom(room).forEach(item=>relatedIds.add(item.id));
+    facilityIqDedicatedEquipmentForRoom(room).forEach(item=>relatedIds.add(item.id));
+    facilityIqExhaustSystemsForRoom(room).forEach(system=>system.fans.forEach(id=>relatedIds.add(id)));
+  });
+  facilityIqExhaustSystemsForAsset(assetId).forEach(exhaust=>{
+    exhaust.rooms.forEach(room=>rooms.add(room));
+    exhaust.fans.forEach(id=>relatedIds.add(id));
+  });
+  const vacpMatch=assetId.match(/^(BIO|CHEM)-VACP-/);
+  if(vacpMatch)Object.keys(assets).filter(id=>id.startsWith(`${vacpMatch[1]}-VACP-`)).forEach(id=>relatedIds.add(id));
+  const trainMatch=assetId.match(/^House-AC-(?:Air-Dryer-)?(0[1-3])$/);
+  if(trainMatch)[`House-AC-${trainMatch[1]}`,`House-AC-Air-Dryer-${trainMatch[1]}`].forEach(id=>relatedIds.add(id));
+  relatedIds.delete(assetId);
+  return {
+    rooms:[...rooms].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})),
+    assets:[...relatedIds].map(id=>assets[id]).filter(Boolean).sort(assetAlphabeticalCompare),
+    systems:[...systems.values()].sort((a,b)=>a.name.localeCompare(b.name))
+  };
+}
+function facilityIqAssetSearchText(asset){
+  const relationships=facilityIqRelationshipsForAsset(asset.id);
+  return [asset.id,asset.name,asset.category,asset.manufacturer,asset.model,asset.location,
+    ...relationships.rooms.flatMap(room=>[`room ${room}`,`lab ${room}`,`laboratory ${room}`]),
+    ...relationships.assets.flatMap(item=>[item.id,item.name,item.category]),
+    ...relationships.systems.flatMap(system=>[system.name,system.description]),
+    ...asset.problems.flatMap(problem=>[problem.name,problem.description])
+  ].join(" ");
+}
+function facilityIqRelationshipMarkup(asset){
+  const relationships=facilityIqRelationshipsForAsset(asset.id);
+  if(!relationships.rooms.length&&!relationships.assets.length&&!relationships.systems.length)return "";
+  return `<section class="asset-relationships"><div class="relationship-heading"><span class="card-kicker">CONNECTED FACILITY CONTEXT</span><h3>Related spaces, equipment, and systems</h3><p>Use these links to move from the asset to the rest of its operating system.</p></div>
+    ${relationships.rooms.length?`<div class="relationship-group"><strong>Spaces served</strong><div>${relationships.rooms.map(room=>`<button type="button" data-related-room="${esc(room)}">Room ${esc(room)}</button>`).join("")}</div></div>`:""}
+    ${relationships.assets.length?`<div class="relationship-group"><strong>Connected assets</strong><div>${relationships.assets.map(item=>`<button type="button" data-related-asset="${esc(item.id)}"><span>${esc(item.id)}</span>${esc(item.name)}</button>`).join("")}</div></div>`:""}
+    ${relationships.systems.length?`<div class="relationship-group"><strong>Plant systems</strong><div>${relationships.systems.map(system=>`<button type="button" data-related-system="${esc(system.id)}">${esc(system.name)}</button>`).join("")}</div></div>`:""}
+  </section>`;
+}
 
 function renderHome(){
   pageTitle.textContent="Operations, made clear.";
@@ -130,7 +177,7 @@ function renderAssetsHome(){
   const cardMarkup=a=>{const manualStatus=facilityIqManualStatus(a);return `<article class="card asset-list-card" data-asset-card="${esc(a.id)}" role="link" tabindex="0" aria-label="Open ${esc(a.name)} troubleshooting"><span class="asset-id">${esc(a.id)}</span><h2><button type="button" class="asset-name-link" data-asset="${esc(a.id)}">${esc(a.name)}</button></h2><dl class="asset-details"><div><dt>Make</dt><dd>${esc(a.manufacturer||"To be confirmed")}</dd></div><div><dt>Model</dt><dd>${esc(a.model||"To be confirmed")}</dd></div><div><dt>Location</dt><dd>${esc(a.location||"To be confirmed")}</dd></div></dl><div class="asset-card-actions"><button type="button" class="primary-button" data-asset="${esc(a.id)}">Troubleshoot</button>${a.manual?`<a class="manual-button" href="${esc(a.manual)}" target="_blank" rel="noopener">Open manual</a>`:`<span class="manual-unavailable">${esc(manualStatus.label)}</span>`}</div>${a.manualNote?`<p class="small-note asset-manual-note">${esc(a.manualNote)}</p>`:""}</article>`};
   function draw(){
     const q=input.value.trim().toLowerCase();
-    const matches=allAssets.filter(a=>(q||activeFamily==="all"||familyForAsset(a).id===activeFamily)&&[a.id,a.name,a.category,a.manufacturer,a.model,a.location,...facilityIqRoomsForAsset(a.id).flatMap(room=>[`room ${room}`,`lab ${room}`,`laboratory ${room}`]),...a.problems.flatMap(p=>[p.name,p.description])].join(" ").toLowerCase().includes(q)).sort(assetAlphabeticalCompare);
+    const matches=allAssets.filter(a=>(q||activeFamily==="all"||familyForAsset(a).id===activeFamily)&&facilityIqAssetSearchText(a).toLowerCase().includes(q)).sort(assetAlphabeticalCompare);
     const visibleFamilies=families.map(family=>({family,items:matches.filter(asset=>familyForAsset(asset).id===family.id)})).filter(group=>group.items.length);
     const selected=families.find(family=>family.id===activeFamily);
     resultEyebrow.textContent=q?"SEARCH RESULTS":activeFamily==="all"?"ALL EQUIPMENT":selected.name.toUpperCase();
@@ -175,15 +222,13 @@ function renderAsset(asset){
   const exhaustSystems=facilityIqExhaustSystemsForAsset(asset.id);
   const roomDescription=exhaustSystems.length?"These laboratories share ductwork and are exhausted by the listed fan pair.":"“Room” and “Lab” are interchangeable in FacilityIQ. Each listed AHU area has a dedicated CAV/VAV terminal, and every VAV has a heating valve. Terminal type and tag remain to be confirmed.";
   const roomList=servedRooms.length?`<div class="served-rooms"><strong>Rooms / labs served</strong><p>${esc(roomDescription)}</p><div>${servedRooms.map(room=>`<span>${esc(room)}</span>`).join("")}</div></div>`:"";
-  const directSystems=Object.values(facilitySystems).filter(s=>s.nodes.some(n=>n.asset===asset.id));
-  const inferredSystems=asset.category==="Air Handling Unit"?[facilitySystems.chilledWater,facilitySystems.hotWater,facilitySystems.controlAir]:[];
-  const relatedSystems=[...new Map([...directSystems,...inferredSystems].filter(Boolean).map(system=>[system.id,system])).values()];
-  const systemLinks=relatedSystems.length?`<div class="related-systems"><strong>Related systems</strong>${relatedSystems.map(s=>`<button class="text-button" data-related-system="${esc(s.id)}">${esc(s.name)}</button>`).join("")}</div>`:"";
   const houseDryerMatch=asset.id.match(/^House-AC-Air-Dryer-(0[1-3])$/);
   const controlsNote=asset.category==="Air Handling Unit"?`<div class="operating-note"><strong>AHU control relationships</strong><p>Cooling depends on chilled water at the active Desigo setpoint and pneumatic air from the dedicated Control Air Compressor and Control Air Dryer. The heating valve is normally open and the cooling valve is normally closed; loss of control air can create simultaneous heating and loss of cooling.</p></div>`:asset.id==="Control-AC"||asset.id==="Control-AC-Air-Dryer"?`<div class="operating-note"><strong>Pneumatic control-air dependency</strong><p>This asset supplies control air to AHU heating/cooling valves and pneumatic fume-hood damper actuators. Low header or branch pressure can leave AHU heating valves open, cooling valves closed, and hood dampers unable to maintain commanded airflow.</p></div>`:houseDryerMatch?`<div class="operating-note"><strong>Dedicated laboratory air-dryer train</strong><p>This dryer is dedicated to House Air Compressor ${houseDryerMatch[1]}. ${esc(asset.serviceArea||"")} Check the compressor and dryer together when diagnosing low pressure, high pressure drop, wet air, or poor dew point. This train supplies laboratory air and does not control AHU valves.</p></div>`:asset.id.startsWith("House-AC-")?`<div class="operating-note"><strong>Laboratory compressed-air service</strong><p>${esc(asset.serviceArea||"This House Air Compressor supplies laboratory compressed-air demand through its matching dedicated air dryer")}. It does not supply pneumatic control air to AHU valves or fume-hood actuators.</p></div>`:asset.id.startsWith("BIO-VACP-")?`<div class="operating-note"><strong>Bio-side laboratory vacuum service</strong><p>BIO-VACP-01 and BIO-VACP-02 support the Bio-side laboratory vacuum header. Compare the common header and both pumps before treating a low-vacuum complaint as a single-pump failure.</p></div>`:exhaustSystems.length?`<div class="operating-note"><strong>Paired laboratory exhaust service</strong>${exhaustSystems.map(system=>`<p><strong>${esc(system.name)}:</strong> ${esc(system.fans.join(" and "))} work together on shared ductwork. ${esc(system.loads.join("; "))}. Diagnose both fans, common duct static, shared controls, and the affected local branch.</p>`).join("")}</div>`:"";
-  app.innerHTML=`<div class="result-card asset-overview"><span class="status">${esc(asset.id)}</span><h2>${esc(asset.name)}</h2><p class="meta"><strong>Category:</strong> ${esc(asset.category)}<br><strong>Manufacturer:</strong> ${esc(asset.manufacturer)}<br><strong>Model:</strong> ${esc(asset.model)}${asset.serialNumber?`<br><strong>Serial:</strong> ${esc(asset.serialNumber)}`:""}<br><strong>Location:</strong> ${esc(asset.location)}${asset.serviceArea?`<br><strong>Serves:</strong> ${esc(asset.serviceArea)}`:""}</p><div class="asset-resource-actions">${manual}${partsButton}</div>${asset.manualNote?`<p class="small-note manual-note">${esc(asset.manualNote)}</p>`:""}${facilityIqAssetPartsMarkup(asset)}${systemLinks}${roomList}${controlsNote}<div class="danger"><strong>Safety:</strong> These guides support trained personnel. They do not replace lockout/tagout, permits, site procedures, manufacturer instructions, or qualified service requirements.</div></div>
+  app.innerHTML=`<div class="result-card asset-overview"><span class="status">${esc(asset.id)}</span><h2>${esc(asset.name)}</h2><p class="meta"><strong>Category:</strong> ${esc(asset.category)}<br><strong>Manufacturer:</strong> ${esc(asset.manufacturer)}<br><strong>Model:</strong> ${esc(asset.model)}${asset.serialNumber?`<br><strong>Serial:</strong> ${esc(asset.serialNumber)}`:""}<br><strong>Location:</strong> ${esc(asset.location)}${asset.serviceArea?`<br><strong>Serves:</strong> ${esc(asset.serviceArea)}`:""}</p><div class="asset-resource-actions">${manual}${partsButton}</div>${asset.manualNote?`<p class="small-note manual-note">${esc(asset.manualNote)}</p>`:""}${facilityIqAssetPartsMarkup(asset)}${facilityIqRelationshipMarkup(asset)}${roomList}${controlsNote}<div class="danger"><strong>Safety:</strong> These guides support trained personnel. They do not replace lockout/tagout, permits, site procedures, manufacturer instructions, or qualified service requirements.</div></div>
   <div class="section-title unified-intro"><h3>Select the symptom</h3><p>Answer the short guided checks once. FacilityIQ will use those answers as evidence and provide ranked diagnostic ratings with the conclusion.</p></div><div class="card-grid">${asset.problems.map(p=>`<button class="card symptom-card" data-problem="${esc(p.id)}"><span class="card-kicker">GUIDED + EVIDENCE DIAGNOSIS</span><h2>${esc(p.name)}</h2><p class="meta">${esc(p.description)}</p></button>`).join("")}</div>`;
   app.querySelectorAll("[data-related-system]").forEach(b=>b.onclick=()=>setRoute({system:b.dataset.relatedSystem}));
+  app.querySelectorAll("[data-related-asset]").forEach(b=>b.onclick=()=>setRoute({asset:b.dataset.relatedAsset}));
+  app.querySelectorAll("[data-related-room]").forEach(b=>b.onclick=()=>facilityIqChat.ask(`Which equipment serves room ${b.dataset.relatedRoom}?`));
   const partsToggle=document.getElementById("asset-parts-button");
   if(partsToggle)partsToggle.onclick=()=>{const panel=document.getElementById("asset-parts-panel"),open=panel.hidden;panel.hidden=!open;partsToggle.setAttribute("aria-expanded",String(open));partsToggle.textContent=open?"Hide Parts":`View Parts (${facilityIqPartsForAsset(asset.id).length})`;if(open)panel.scrollIntoView({behavior:"smooth",block:"nearest"})};
   app.querySelectorAll("[data-problem]").forEach(b=>b.onclick=()=>{const p=asset.problems.find(x=>x.id===b.dataset.problem);clearSession(asset.id,p.id);setRoute({asset:asset.id,problem:p.id,step:p.startStep})});
@@ -318,7 +363,7 @@ const quickFindInput=document.getElementById("quick-find-input");
 const quickFindResults=document.getElementById("quick-find-results");
 let quickFindActiveIndex=0;
 function quickFindRecords(){
-  const assetRecords=Object.values(assets).map(asset=>({type:"Asset",label:`${asset.id} · ${asset.name}`,detail:`${asset.category} · ${asset.location}`,action:"asset",value:asset.id,keywords:[asset.id,asset.name,asset.category,asset.manufacturer,asset.model,asset.location,...facilityIqRoomsForAsset(asset.id).map(room=>`room ${room} lab ${room}`)].join(" ")}));
+  const assetRecords=Object.values(assets).map(asset=>({type:"Asset",label:`${asset.id} · ${asset.name}`,detail:`${asset.category} · ${asset.location}`,action:"asset",value:asset.id,keywords:facilityIqAssetSearchText(asset)}));
   const rooms=[...new Set([...Object.values(facilityIqRoomAssignments).flat(),...Object.keys(facilityIqDedicatedRoomEquipment),...Object.values(facilityIqExhaustSystems).flatMap(system=>system.rooms)])].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
   const roomRecords=rooms.map(room=>{const ahus=facilityIqAhusForRoom(room),dedicated=facilityIqDedicatedEquipmentForRoom(room),exhaust=facilityIqExhaustSystemsForRoom(room);const served=[...ahus.map(asset=>asset.id),...dedicated.map(asset=>asset.id),...exhaust.flatMap(system=>system.fans)];return {type:"Room",label:`Room / Lab ${room}`,detail:served.length?`Served by ${[...new Set(served)].join(", ")}`:"Serving equipment requires verification",action:"room",value:room,keywords:`room ${room} lab ${room} laboratory ${room} ${served.join(" ")}`}});
   const systemRecords=Object.values(facilitySystems).map(system=>({type:"System",label:system.name,detail:system.description,action:"system",value:system.id,keywords:[system.name,system.description,...system.notes].join(" ")}));

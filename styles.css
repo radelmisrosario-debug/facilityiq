@@ -567,3 +567,13 @@ body{
 .quick-find-shell>footer span{display:flex;align-items:center;gap:4px}.quick-find-shell kbd{border:1px solid #ced6df;border-radius:4px;padding:2px 4px;background:#fff;color:#5f6a77;font-family:inherit}
 @media(max-width:760px){.quick-find-button kbd{display:none}.quick-find-button{font-size:0}.quick-find-button>span{font-size:1.35rem}.quick-find-results>button{grid-template-columns:65px minmax(0,1fr) auto}}
 @media(max-width:520px){.quick-find-dialog{width:calc(100vw - 14px)}.quick-find-shell>header,#quick-find-input,.quick-find-shell>label{margin-left:0;margin-right:0}.quick-find-results>button{grid-template-columns:1fr auto}.quick-find-type{display:none}.quick-find-shell>footer{display:none}}
+
+/* Asset-to-system relationship layer */
+.asset-relationships{margin-top:20px;border:1px solid #cddae3;border-radius:15px;padding:18px;background:linear-gradient(145deg,#f7fafc,#eef6f3)}
+.relationship-heading h3{margin:4px 0 5px;color:var(--fiq-navy-deep);font-size:1.18rem}.relationship-heading p{margin:0;color:#687783;font-size:.86rem}
+.relationship-group{margin-top:16px;padding-top:14px;border-top:1px solid #d9e3e6}
+.relationship-group>strong{display:block;margin-bottom:9px;color:#485867;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+.relationship-group>div{display:flex;flex-wrap:wrap;gap:7px}
+.relationship-group button{border:1px solid #c6d5dc;border-radius:9px;padding:8px 10px;background:#fff;color:#314c5b;font-size:.78rem;font-weight:750;cursor:pointer}
+.relationship-group button:hover,.relationship-group button:focus-visible{border-color:var(--fiq-green);background:#eaf7f0;color:#175d40;outline:none}
+.relationship-group button span{display:block;margin-bottom:3px;color:var(--fiq-green);font-size:.64rem;font-weight:950;letter-spacing:.04em}
