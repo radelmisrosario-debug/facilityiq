@@ -8,40 +8,59 @@ function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",
 const assetAlphabeticalCompare=(a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true,sensitivity:"base"})||a.id.localeCompare(b.id,undefined,{numeric:true,sensitivity:"base"});
 
 function renderHome(){
-  pageTitle.textContent="How can FacilityIQ help?";
+  pageTitle.textContent="Operations, made clear.";
   homeButton.hidden=true;
   app.innerHTML=`<section class="launch-hero">
-    <span class="status">FACILITY TROUBLESHOOTING</span>
-    <h2>Choose where you want to start</h2>
-    <p>Select an individual asset, review the connected plant system, or describe the issue to the FacilityIQ assistant.</p>
+    <div class="hero-copy">
+      <span class="status">BUILT FOR THE PEOPLE WHO KEEP FACILITIES RUNNING</span>
+      <h2>Find the fault.<br><em>Restore the system.</em></h2>
+      <p>FacilityIQ brings asset troubleshooting, connected plant knowledge, operating guidance, manuals, and parts into one field-ready workspace.</p>
+      <div class="hero-actions">
+        <button type="button" class="primary-button" id="hero-assets-button">Start troubleshooting</button>
+        <button type="button" class="secondary-button" id="hero-ask-button">Ask FacilityIQ</button>
+      </div>
+    </div>
+    <aside class="hero-status" aria-label="FacilityIQ capabilities">
+      <span class="hero-status-label">OPERATIONAL WORKSPACE</span>
+      <strong>One source of truth</strong>
+      <ul>
+        <li><b>Asset-level</b><span>Guided diagnostics</span></li>
+        <li><b>System-level</b><span>Connected equipment</span></li>
+        <li><b>Field-ready</b><span>Manuals, evidence & parts</span></li>
+      </ul>
+      <small>Powered by facility knowledge</small>
+    </aside>
   </section>
+  <div class="launch-section-heading"><span>CHOOSE A WORKFLOW</span><h2>What do you need to do?</h2></div>
   <div class="launch-grid">
     <button class="launch-card asset-launch" id="assets-button">
-      <span class="launch-number">01</span><span class="launch-type">EQUIPMENT</span>
+      <span class="launch-icon" aria-hidden="true">A</span><span class="launch-type">EQUIPMENT</span>
       <h2>Troubleshoot an Asset</h2>
-      <p>Find a specific chiller, pump, AHU, boiler, UPS, fan, compressor, or other asset and follow its diagnostic guide.</p>
-      <span class="launch-link">Browse assets <b>→</b></span>
+      <p>Search equipment by name, tag, room, model, alarm, or symptom and follow a focused diagnostic path.</p>
+      <span class="launch-link">Browse equipment <b>→</b></span>
     </button>
     <button class="launch-card system-launch" id="systems-button">
-      <span class="launch-number">02</span><span class="launch-type">PLANT OVERVIEW</span>
+      <span class="launch-icon" aria-hidden="true">S</span><span class="launch-type">CONNECTED SYSTEMS</span>
       <h2>Troubleshoot the Plant System</h2>
-      <p>Trace equipment relationships, review flow paths, and work through system-level symptoms and checks.</p>
-      <span class="launch-link">Open plant systems <b>→</b></span>
+      <p>Trace supply and return paths, understand dependencies, and diagnose symptoms affecting multiple assets.</p>
+      <span class="launch-link">Explore plant systems <b>→</b></span>
     </button>
     <button class="launch-card manual-launch" id="manual-button">
-      <span class="launch-number">03</span><span class="launch-type">OPERATIONS REFERENCE</span>
+      <span class="launch-icon" aria-hidden="true">K</span><span class="launch-type">OPERATIONS REFERENCE</span>
       <h2>Facility Knowledge Base</h2>
-      <p>Search operating sequences, system relationships, preventive-maintenance intervals, safety notes, and items that still need field verification.</p>
-      <span class="launch-link">Explore knowledge base <b>→</b></span>
+      <p>Find operating sequences, system relationships, preventive-maintenance guidance, safety notes, and field references.</p>
+      <span class="launch-link">Open knowledge base <b>→</b></span>
     </button>
     <button class="launch-card assistant-launch" id="assistant-button">
-      <span class="launch-number">04</span><span class="launch-type">QUICK ANSWERS</span>
+      <span class="launch-icon" aria-hidden="true">IQ</span><span class="launch-type">FACILITY ASSISTANT</span>
       <h2>Ask FacilityIQ</h2>
-      <p>Ask which equipment serves a room, search facility knowledge, or describe an issue and open the matching troubleshooting guide.</p>
+      <p>Describe an equipment issue or ask which system serves a space. FacilityIQ will route you to the right answer or guide.</p>
       <span class="launch-link">Ask a question <b>→</b></span>
     </button>
   </div>
-  <p class="launch-safety"><strong>Work safely.</strong> FacilityIQ supports trained personnel and does not replace LOTO, permits, site procedures, or manufacturer instructions.</p>`;
+  <footer class="product-footer"><div><img src="assets/reliant-facility-solutions-logo.png" alt="" /><span>FacilityIQ</span></div><p><strong>Work safely.</strong> FacilityIQ supports trained personnel and does not replace LOTO, permits, site procedures, or manufacturer instructions.</p></footer>`;
+  document.getElementById("hero-assets-button").onclick=()=>setRoute({view:"assets"});
+  document.getElementById("hero-ask-button").onclick=()=>facilityIqChat.toggle(true);
   document.getElementById("assets-button").onclick=()=>setRoute({view:"assets"});
   document.getElementById("systems-button").onclick=()=>setRoute({view:"systems"});
   document.getElementById("assistant-button").onclick=()=>facilityIqChat.toggle(true);
@@ -252,6 +271,7 @@ function render(){
   renderStep(a,p,r.step);
 }
 homeButton.onclick=()=>setRoute({});
+document.getElementById("brand-home-button").onclick=()=>setRoute({});
 const cornerMenuButton=document.getElementById("corner-menu-button");
 const cornerMenuList=document.getElementById("corner-menu-list");
 function closeCornerMenu(){cornerMenuList.hidden=true;cornerMenuButton.setAttribute("aria-expanded","false")}

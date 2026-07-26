@@ -3,21 +3,27 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="FacilityIQ equipment troubleshooting guides and manuals" />
-  <title>FacilityIQ V08 — Facility Troubleshooting</title>
-  <link rel="stylesheet" href="styles.css?v=25" />
+  <meta name="description" content="FacilityIQ — intelligent facility operations, troubleshooting, and equipment knowledge by Reliant Facility Solutions." />
+  <meta name="theme-color" content="#252b72" />
+  <title>FacilityIQ | Reliant Facility Solutions</title>
+  <link rel="stylesheet" href="styles.css?v=26" />
 </head>
 <body>
   <main class="app-shell">
     <header class="app-header">
-      <div>
-        <p class="eyebrow">FACILITYIQ V08</p>
+      <button class="brand-lockup" type="button" id="brand-home-button" aria-label="FacilityIQ home">
+        <img src="assets/reliant-facility-solutions-logo.png" alt="Reliant Facility Solutions" />
+        <span class="brand-divider" aria-hidden="true"></span>
+        <span class="product-brand"><strong>Facility<span>IQ</span></strong><small>Operations intelligence</small></span>
+      </button>
+      <div class="page-heading">
+        <p class="eyebrow">FACILITY OPERATIONS PLATFORM</p>
         <h1 id="page-title">How can FacilityIQ help?</h1>
       </div>
       <div class="header-navigation">
         <button id="home-button" class="secondary-button" hidden>Home</button>
         <nav class="corner-menu" aria-label="FacilityIQ section navigation">
-          <button id="corner-menu-button" type="button" aria-expanded="false" aria-controls="corner-menu-list">Menu <span aria-hidden="true">▾</span></button>
+          <button id="corner-menu-button" type="button" aria-expanded="false" aria-controls="corner-menu-list"><span class="menu-icon" aria-hidden="true"><i></i><i></i><i></i></span> Menu</button>
           <div id="corner-menu-list" hidden>
             <button type="button" data-corner-nav="home">Home</button>
             <button type="button" data-corner-nav="assets">Troubleshoot an Asset</button>
