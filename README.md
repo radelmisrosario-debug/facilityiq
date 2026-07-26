@@ -61,6 +61,13 @@ Desigo, AHUs, CAV/VAV controls, chilled and hot water, laboratory exhaust and
 fume hoods, Room 503, compressed air, emergency power, RTUs, life-safety
 systems, access control, preventive-maintenance intervals, and field-verification
 items. The original source documents are available from the manual page.
+
+The MaintainX CSV expansion registers 16 tagged RTUs, two Mitsubishi server-room
+mini-splits, the Room 258 Liebert precision-cooling unit, and the complete
+EF-01–12/18/19/21–28/30/31/QA exhaust-fan inventory present in the export.
+RTU, mini-split, precision-cooling, and exhaust guides use equipment-specific
+symptoms, and matched manufacturer manuals include a visible verification note
+when the CSV model family or suffix is ambiguous.
 AHU sequence, hot-water setpoint and availability, control air, heating/cooling
 valve positions, and heating-coil performance.
 

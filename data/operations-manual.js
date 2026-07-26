@@ -94,7 +94,7 @@ const facilityOperationsManual = {
       facts:["Most are described as serving Biology-side offices.","Chemistry-side RTUs are described as serving the break room, QA offices, 700 offices, and Q1 area.","Draft preventive maintenance frequency is every six months, including filters and operational checks."],
       operations:["For no cooling/heating, verify thermostat demand, schedule, power, safeties, fan, filters, airflow, gas heat or refrigeration sequence, and alarms.","Record each RTU tag, served area, manufacturer, model, capacity, thermostat, filter size, and control points."],
       safety:"Use roof fall protection, LOTO, gas, combustion, refrigerant, and electrical procedures.",
-      verify:["The 16 RTUs are not yet registered as individual FacilityIQ assets. Complete an equipment survey before adding model-specific troubleshooting."]
+      verify:["The CSV now registers 16 tagged RTUs plus the Liebert Room 258 unit. Confirm each RTU’s served area, installed heat option, thermostat/Desigo points, refrigerant, filter size, and complete model suffix."]
     },
     {
       id:"fire-sprinkler",title:"Fire Alarm and Sprinkler Systems",category:"Life Safety",

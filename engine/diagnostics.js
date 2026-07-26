@@ -94,6 +94,34 @@ const diagnosticProfiles = {
       {id:"hoodFaceVelocity",label:"Affected hood face velocity",unit:"FPM",type:"number",step:"1"}
     ]
   },
+  rtu: {
+    title:"Roof-Top Unit Diagnostic Measurements",
+    fields:[
+      {id:"roomTemperature",label:"Room temperature",unit:"Â°F",type:"number",step:"0.1"},
+      {id:"roomSetpoint",label:"Effective room setpoint",unit:"Â°F",type:"number",step:"0.1"},
+      {id:"returnAir",label:"Return-air temperature",unit:"Â°F",type:"number",step:"0.1"},
+      {id:"supplyAir",label:"Supply-air temperature",unit:"Â°F",type:"number",step:"0.1"},
+      {id:"outdoorAir",label:"Outdoor-air temperature",unit:"Â°F",type:"number",step:"0.1"},
+      {id:"staticPressure",label:"Supply static pressure",unit:"in. w.c.",type:"number",step:"0.01"},
+      {id:"motorAmps",label:"Supply-fan motor current",unit:"A",type:"number",step:"0.1"},
+      {id:"motorFla",label:"Supply-fan motor FLA",unit:"A",type:"number",step:"0.1"},
+      {id:"compressorAmps",label:"Compressor current",unit:"A",type:"number",step:"0.1"},
+      {id:"dischargeTemp",label:"Compressor discharge temperature",unit:"Â°F",type:"number",step:"0.1"}
+    ]
+  },
+  miniSplit: {
+    title:"Mini-Split / Precision Cooling Measurements",
+    fields:[
+      {id:"roomTemperature",label:"Room temperature",unit:"Â°F",type:"number",step:"0.1"},
+      {id:"roomSetpoint",label:"Controller setpoint",unit:"Â°F",type:"number",step:"0.1"},
+      {id:"returnAir",label:"Indoor return-air temperature",unit:"Â°F",type:"number",step:"0.1"},
+      {id:"supplyAir",label:"Indoor discharge-air temperature",unit:"Â°F",type:"number",step:"0.1"},
+      {id:"outdoorAir",label:"Outdoor-air temperature",unit:"Â°F",type:"number",step:"0.1"},
+      {id:"suctionLineTemp",label:"Suction-line temperature",unit:"Â°F",type:"number",step:"0.1"},
+      {id:"liquidLineTemp",label:"Liquid-line temperature",unit:"Â°F",type:"number",step:"0.1"},
+      {id:"compressorAmps",label:"Compressor operating current",unit:"A",type:"number",step:"0.1"}
+    ]
+  },
   boiler: {
     title:"Boiler Diagnostic Measurements",
     fields:[
@@ -161,6 +189,8 @@ function profileForAsset(asset){
   if(c.includes("air compressor")||c.includes("compressor")) return "airCompressor";
   if(c.includes("air handling")||asset.id.startsWith("AHU")) return "ahu";
   if(c.includes("exhaust fan")||asset.id.startsWith("EF-")) return "fan";
+  if(c.includes("roof top unit")||asset.id.startsWith("RTU-")) return "rtu";
+  if(c.includes("mini-split")||c.includes("precision cooling")||asset.id==="Liebert-258") return "miniSplit";
   if(c.includes("boiler")) return "boiler";
   if(c.includes("ups")) return "ups";
   if(c.includes("vacuum")) return "vacuum";
