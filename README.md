@@ -52,6 +52,16 @@ The chat can identify an asset and symptom in the same sentence, such as
 "Boiler 03 is not firing," "House Air Compressor 02 will not build pressure,"
 or "AHU-06 has low airflow," and start the matching guide directly.
 
+## Faster field workflow
+
+The evidence form now shows only measurements referenced by the selected
+symptom. All other profile measurements remain available under a collapsed
+optional-advanced section. Guide-derived symptoms can begin with observations
+alone when no reading is required. Changing symptoms preserves values already
+entered during the session. The first pass is capped at six prioritized
+measurements and five high-value field checks; remaining evidence is revealed
+only when needed.
+
 V08 introduces a dedicated home screen with three clear starting points:
 
 - Troubleshoot an individual asset

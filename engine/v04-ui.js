@@ -105,14 +105,21 @@ function bindDiagnosticPanel(asset){
 
 /* ===== FacilityIQ V05 tri-state and evidence-quality UI overrides ===== */
 
-function fiqObservationMarkup(profile,problemId){
+function fiqObservationItems(profile,problemId){
   const labels=Object.fromEntries(facilityIqObservations[profile]||[]);
-  const usedKeys=[...new Set((facilityIqKnowledgeBase?.[profile]?.[problemId]||[])
+  const rules=(facilityIqKnowledgeBase?.[profile]?.[problemId]||[])
     .flatMap(failure=>failure.evidence||[])
-    .filter(rule=>rule.kind==="observation")
-    .map(rule=>rule.key))];
-  const observations=usedKeys.length?usedKeys.map(key=>[key,labels[key]||key]):(facilityIqObservations[profile]||[]);
-  return observations.map(([key,label])=>`
+    .filter(rule=>rule.kind==="observation");
+  const weights={};
+  rules.forEach(rule=>weights[rule.key]=Math.max(weights[rule.key]||0,rule.weight||0));
+  const usedKeys=[...new Set(rules.map(rule=>rule.key))].sort((a,b)=>(weights[b]||0)-(weights[a]||0));
+  return usedKeys.length?usedKeys.map(key=>[key,labels[key]||key]):(facilityIqObservations[profile]||[]);
+}
+
+function fiqObservationMarkup(profile,problemId,section="quick"){
+  const observations=fiqObservationItems(profile,problemId);
+  const selected=section==="quick"?observations.slice(0,5):observations.slice(5);
+  return selected.map(([key,label])=>`
     <div class="evidence-option evidence-tristate" data-evidence-row="${esc(key)}">
       <span>${esc(label)}</span>
       <div class="tri-buttons" role="group" aria-label="${esc(label)}">
@@ -179,6 +186,43 @@ function fiqOperatingModeOptions(profile,savedMode){
   return modes.map(mode=>`<option${mode===selected?" selected":""}>${esc(mode)}</option>`).join("");
 }
 
+function fiqMeasurementCatalog(profile){
+  const fields=[...(diagnosticProfiles?.[profile]?.fields||[])];
+  if(profile==="ahu")fields.push({id:"airflow",label:"Measured AHU airflow",unit:"CFM",type:"number",step:"1"});
+  if(profile==="boiler")fields.push({id:"flow",label:"Hot-water flow",unit:"GPM",type:"number",step:"0.1"});
+  return fields;
+}
+
+function fiqSymptomMeasurementKeys(profile,problemId){
+  const failures=facilityIqKnowledgeBase?.[profile]?.[problemId]||[];
+  const priority={};
+  failures.forEach(failure=>{
+    (failure.required||[]).forEach(key=>priority[key]=Math.max(priority[key]||0,25));
+    (failure.evidence||[]).filter(rule=>rule.kind==="measurement").forEach(rule=>{
+      priority[rule.key]=Math.max(priority[rule.key]||0,rule.weight||0);
+      if(rule.other)priority[rule.other]=Math.max(priority[rule.other]||0,rule.weight||0);
+    });
+  });
+  return Object.keys(priority).sort((a,b)=>priority[b]-priority[a]).slice(0,6);
+}
+
+function fiqMeasurementFieldsMarkup(fields,saved){
+  return fields.map(field=>`<label class="measurement-field"><span>${esc(field.label)}</span><div class="input-unit"><input inputmode="decimal" type="${field.type}" step="${field.step}" data-measure="${field.id}" value="${saved[field.id]??""}" placeholder="—"><b>${esc(field.unit)}</b></div></label>`).join("");
+}
+
+function fiqMeasurementSections(profile,problemId,saved){
+  const catalog=fiqMeasurementCatalog(profile);
+  const quickKeys=fiqSymptomMeasurementKeys(profile,problemId);
+  const quick=catalog.filter(field=>quickKeys.includes(field.id));
+  const advanced=catalog.filter(field=>!quickKeys.includes(field.id));
+  return {
+    quick:quick.length?fiqMeasurementFieldsMarkup(quick,saved):`<p class="quick-empty">No readings are required for the first-pass analysis. Classify the short field-observation list below.</p>`,
+    advanced:fiqMeasurementFieldsMarkup(advanced,saved),
+    quickCount:quick.length,
+    advancedCount:advanced.length
+  };
+}
+
 function fiqQualityMarkup(profile,quality,contradictions){
   const level=quality.completeness>=65?"strong":quality.completeness>=35?"moderate":"limited";
   return `<section class="quality-panel ${level}">
@@ -222,16 +266,18 @@ function renderDiagnosticPanel(asset){
   const profile=diagnosticProfiles[profileName],saved=loadMeasurements(asset.id);
   const problemOptions=fiqProblemOptions(asset,profileName);
   const defaultProblem=asset.problems.find(problem=>facilityIqKnowledgeBase?.[profileName]?.[problem.id])?.id||"";
-  const airflowField=profileName==="ahu"?`<label class="measurement-field"><span>Measured airflow</span><div class="input-unit"><input inputmode="decimal" type="number" step="1" data-measure="airflow" value="${saved.airflow??""}" placeholder="—"><b>CFM</b></div></label>`:"";
-  const flowField=profileName==="boiler"?`<label class="measurement-field"><span>Hot-water flow</span><div class="input-unit"><input inputmode="decimal" type="number" step="0.1" data-measure="flow" value="${saved.flow??""}" placeholder="—"><b>GPM</b></div></label>`:"";
+  const measurementSections=fiqMeasurementSections(profileName,defaultProblem,saved);
+  const observationCount=fiqObservationItems(profileName,defaultProblem).length;
 
   return `<section class="diagnostic-panel v04-panel">
     <div class="diagnostic-heading"><div><span class="status">V05 EVIDENCE ENGINE</span><h3>Diagnostic Coverage and Evidence Quality</h3>
-    <p class="meta">Choose a supported symptom, enter measured values, and classify each field observation as Yes, No, or Unknown.</p></div></div>
+    <p class="meta">Choose a symptom, enter only the quick readings you already have, and classify the short field-observation list. Advanced readings are optional.</p></div></div>
     ${problemOptions?`<label class="diagnosis-select"><span>Symptom to analyze</span><select id="weighted-problem">${problemOptions}</select></label>`:`<div class="warning">A weighted model has not yet been configured for this asset profile. Engineering calculations remain available.</div>`}
     <div class="evidence-context"><label><span>Operating condition</span><select id="evidence-mode" data-measure="evidenceMode">${fiqOperatingModeOptions(profileName,saved.evidenceMode)}</select></label><label><span>Observation time</span><input id="evidence-time" data-measure="observedAt" type="datetime-local" value="${esc(saved.observedAt||"")}"></label></div>
-    <div class="measurement-grid">${profile.fields.map(f=>`<label class="measurement-field"><span>${esc(f.label)}</span><div class="input-unit"><input inputmode="decimal" type="${f.type}" step="${f.step}" data-measure="${f.id}" value="${saved[f.id]??""}" placeholder="—"><b>${esc(f.unit)}</b></div></label>`).join("")}${airflowField}${flowField}</div>
-    ${problemOptions?`<details class="evidence-box" open><summary>Symptom-specific field observations — Yes / No / Unknown</summary><div id="evidence-grid" class="evidence-grid">${fiqObservationMarkup(profileName,defaultProblem)}</div></details>`:""}
+    <div class="quick-measurements"><div class="quick-heading"><strong>Quick readings</strong><span id="quick-count">${measurementSections.quickCount} relevant field${measurementSections.quickCount===1?"":"s"}</span></div><div id="quick-measurement-grid" class="measurement-grid">${measurementSections.quick}</div></div>
+    <details class="advanced-measurements"><summary>Optional advanced readings <span id="advanced-count">(${measurementSections.advancedCount})</span></summary><div id="advanced-measurement-grid" class="measurement-grid">${measurementSections.advanced}</div></details>
+    ${problemOptions?`<details class="evidence-box" open><summary>Quick field checks — Yes / No / Unknown</summary><div id="evidence-grid" class="evidence-grid">${fiqObservationMarkup(profileName,defaultProblem,"quick")}</div></details>
+    <details id="advanced-evidence-box" class="evidence-box" ${observationCount<=5?"hidden":""}><summary>Additional field checks <span id="advanced-evidence-count">(${Math.max(0,observationCount-5)})</span></summary><div id="advanced-evidence-grid" class="evidence-grid">${fiqObservationMarkup(profileName,defaultProblem,"advanced")}</div></details>`:""}
     <div class="button-row diagnostic-actions"><button id="analyze-readings" class="primary-button">Run Diagnostic Analysis</button><button id="clear-readings" class="secondary-button">Clear</button></div>
     <div id="diagnostic-output"></div>
   </section>`;
@@ -242,13 +288,23 @@ function bindDiagnosticPanel(asset){
   if(!analyze)return;
   const profile=profileForAsset(asset);
   fiqBindTriState();
+  const collect=()=>Object.fromEntries([...document.querySelectorAll("[data-measure]")].map(x=>[x.dataset.measure,x.value]));
   const problemSelect=document.getElementById("weighted-problem");
   if(problemSelect)problemSelect.onchange=()=>{
+    Object.assign(saved,collect());
+    const sections=fiqMeasurementSections(profile,problemSelect.value,saved);
+    document.getElementById("quick-measurement-grid").innerHTML=sections.quick;
+    document.getElementById("advanced-measurement-grid").innerHTML=sections.advanced;
+    document.getElementById("quick-count").textContent=`${sections.quickCount} relevant field${sections.quickCount===1?"":"s"}`;
+    document.getElementById("advanced-count").textContent=`(${sections.advancedCount})`;
+    const observationCount=fiqObservationItems(profile,problemSelect.value).length;
     const grid=document.getElementById("evidence-grid");
-    grid.innerHTML=fiqObservationMarkup(profile,problemSelect.value);
+    grid.innerHTML=fiqObservationMarkup(profile,problemSelect.value,"quick");
+    document.getElementById("advanced-evidence-grid").innerHTML=fiqObservationMarkup(profile,problemSelect.value,"advanced");
+    document.getElementById("advanced-evidence-count").textContent=`(${Math.max(0,observationCount-5)})`;
+    document.getElementById("advanced-evidence-box").hidden=observationCount<=5;
     fiqBindTriState();
   };
-  const collect=()=>Object.fromEntries([...document.querySelectorAll("[data-measure]")].map(x=>[x.dataset.measure,x.value]));
 
   analyze.onclick=()=>{
     const values=collect(),observations=fiqCollectObservations();
