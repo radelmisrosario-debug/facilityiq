@@ -23,8 +23,8 @@ h1,h2,h3,p{margin-top:0}
 .result-card{margin-top:20px}
 .section-title{margin-top:26px;margin-bottom:8px}
 .small-note{font-size:.9rem;color:#66737f}
-.asset-list-card{cursor:default;display:flex;flex-direction:column;min-height:300px}
-.asset-list-card:hover{transform:none}
+.asset-list-card{cursor:pointer;display:flex;flex-direction:column;min-height:300px}
+.asset-list-card:hover,.asset-list-card:focus-visible{transform:translateY(-2px);border-color:#4f956d;box-shadow:0 10px 24px rgba(36,96,65,.14);outline:none}
 .asset-list-card h2{margin-bottom:10px}
 .asset-name-link{border:0;padding:0;background:transparent;color:#235d43;font-size:inherit;font-weight:inherit;text-align:left;cursor:pointer}
 .asset-name-link:hover,.asset-name-link:focus-visible{text-decoration:underline;text-underline-offset:3px;outline:none;color:#174b34}
