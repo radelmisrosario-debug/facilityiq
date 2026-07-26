@@ -395,6 +395,10 @@ function bindDiagnosticPanel(asset){
 function troubleshootingSummary(asset,problem,result){
   const data=readSession(asset.id,problem.id);
   const checks=data.answers.length?data.answers.map(x=>`${x.answer}: ${x.question}`).join("\n"):"No guided checks were recorded.";
+  const analysis=typeof fiqUnifiedAnalysis==="function"?fiqUnifiedAnalysis(asset,problem,data,result):null;
+  const ratings=analysis?`Diagnostic support rating: ${analysis.score}/100 — ${analysis.label}
+Evidence note: This is a support score based on recorded checks and readings, not a statistical failure probability.
+${analysis.rankings.slice(0,3).map((item,index)=>`${index+1}. ${item.title}: ${item.relative}% relative diagnostic rating`).join("\n")}`:"Diagnostic ratings were not available for this asset.";
   return `FacilityIQ Troubleshooting Summary
 Asset: ${asset.id} — ${asset.name}
 Location: ${asset.location}
@@ -409,6 +413,9 @@ ${result.cause}
 
 Recommended action:
 ${result.action}
+
+Diagnostic ratings:
+${ratings}
 
 Safety:
 ${result.safety}`;

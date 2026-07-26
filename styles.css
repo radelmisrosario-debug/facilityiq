@@ -236,6 +236,16 @@ h1,h2,h3,p{margin-top:0}
 .manual-library-card .manual-button{margin-top:auto}
 .manual-library-card .text-button{margin-top:.75rem}
 .manual-unavailable{display:inline-block;margin-top:auto;padding:.65rem .8rem;border-radius:.55rem;background:#f2f4f7;color:#667782;font-weight:800}
+.unified-intro{display:flex;align-items:end;justify-content:space-between;gap:18px}.unified-intro h3{margin:0}.unified-intro p{max-width:660px;margin:0;color:#61727c;line-height:1.5}
+.unified-diagnosis{margin:24px 0;border-top:1px solid #d7e0e5;padding-top:20px}
+.unified-rating{display:flex;justify-content:space-between;gap:20px;align-items:center;border:1px solid #bfcfd7;border-left:6px solid #567482;border-radius:14px;padding:18px;background:#f6f9fa}
+.unified-rating.supported{border-left-color:#c88a22;background:#fff9ed}.unified-rating.strong{border-left-color:#27815f;background:#eef9f4}
+.unified-rating h3{margin:5px 0 6px}.unified-rating p{max-width:620px;margin:0;color:#596d78;line-height:1.45}
+.unified-rating>strong{min-width:104px;text-align:right;color:#183c4e;font-size:2.5rem;line-height:1}.unified-rating>strong small{font-size:.9rem;color:#71818a}
+.unified-rankings{margin-top:18px}.unified-evidence-editor{margin-top:18px;border:1px solid #ccd8de;border-radius:12px;background:#fff}
+.unified-evidence-editor>summary{padding:16px;font-weight:900;color:#284958;cursor:pointer}.unified-evidence-editor>.meta,.unified-evidence-editor>.quick-measurements,.unified-evidence-editor>.advanced-measurements,.unified-evidence-editor>.evidence-box,.unified-evidence-editor>.button-row{margin-left:16px;margin-right:16px}
+.evidence-editor-heading{display:flex;justify-content:space-between;gap:12px;padding:14px;color:#314754}.evidence-editor-heading span{color:#70808a;font-size:.82rem}
+@media(max-width:650px){.unified-intro,.unified-rating,.manual-library-summary{display:block}.unified-intro p{margin-top:8px}.unified-rating>strong{display:block;margin-top:16px;text-align:left}}
 .served-rooms{margin-top:18px;padding-top:16px;border-top:1px solid #dce2e8}
 .served-rooms>strong{display:block;margin-bottom:9px;color:#405460}
 .served-rooms p{margin:0 0 10px;color:#65747d;font-size:.82rem}

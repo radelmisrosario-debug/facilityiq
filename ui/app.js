@@ -142,12 +142,106 @@ function renderAsset(asset){
   const houseDryerMatch=asset.id.match(/^House-AC-Air-Dryer-(0[1-3])$/);
   const controlsNote=asset.category==="Air Handling Unit"?`<div class="operating-note"><strong>AHU control relationships</strong><p>Cooling depends on chilled water at the active Desigo setpoint and pneumatic air from the dedicated Control Air Compressor and Control Air Dryer. The heating valve is normally open and the cooling valve is normally closed; loss of control air can create simultaneous heating and loss of cooling.</p></div>`:asset.id==="Control-AC"||asset.id==="Control-AC-Air-Dryer"?`<div class="operating-note"><strong>AHU control-air dependency</strong><p>This asset is part of the dedicated pneumatic control-air source for AHU valves. Low header or branch pressure can leave heating valves open and cooling valves closed.</p></div>`:houseDryerMatch?`<div class="operating-note"><strong>Dedicated laboratory air-dryer train</strong><p>This dryer is dedicated to House Air Compressor ${houseDryerMatch[1]}. Check the compressor and dryer together when diagnosing low pressure, high pressure drop, wet air, or poor dew point. This train supplies laboratory air and does not control AHU valves.</p></div>`:asset.id.startsWith("House-AC-")?`<div class="operating-note"><strong>Laboratory compressed-air service</strong><p>This House Air Compressor supplies laboratory compressed-air demand through its matching dedicated air dryer. It does not supply pneumatic control air to the AHU valves.</p></div>`:exhaustSystems.length?`<div class="operating-note"><strong>Paired laboratory exhaust service</strong>${exhaustSystems.map(system=>`<p><strong>${esc(system.name)}:</strong> ${esc(system.fans.join(" and "))} work together on shared ductwork. ${esc(system.loads.join("; "))}. Diagnose both fans, common duct static, shared controls, and the affected local branch.</p>`).join("")}</div>`:"";
   app.innerHTML=`<div class="result-card asset-overview"><span class="status">${esc(asset.id)}</span><h2>${esc(asset.name)}</h2><p class="meta"><strong>Category:</strong> ${esc(asset.category)}<br><strong>Manufacturer:</strong> ${esc(asset.manufacturer)}<br><strong>Model:</strong> ${esc(asset.model)}${asset.serialNumber?`<br><strong>Serial:</strong> ${esc(asset.serialNumber)}`:""}<br><strong>Location:</strong> ${esc(asset.location)}${asset.serviceArea?`<br><strong>Serves:</strong> ${esc(asset.serviceArea)}`:""}</p>${manual}${asset.manualNote?`<p class="small-note manual-note">${esc(asset.manualNote)}</p>`:""}${systemLinks}${roomList}${controlsNote}<div class="danger"><strong>Safety:</strong> These guides support trained personnel. They do not replace lockout/tagout, permits, site procedures, manufacturer instructions, or qualified service requirements.</div></div>
-  <h3 class="section-title">Select the symptom</h3><div class="card-grid">${asset.problems.map(p=>`<button class="card symptom-card" data-problem="${esc(p.id)}"><span class="card-kicker">GUIDED DIAGNOSIS</span><h2>${esc(p.name)}</h2><p class="meta">${esc(p.description)}</p></button>`).join("")}</div>
-  ${renderDiagnosticPanel(asset)}`;
+  <div class="section-title unified-intro"><h3>Select the symptom</h3><p>Answer the short guided checks once. FacilityIQ will use those answers as evidence and provide ranked diagnostic ratings with the conclusion.</p></div><div class="card-grid">${asset.problems.map(p=>`<button class="card symptom-card" data-problem="${esc(p.id)}"><span class="card-kicker">GUIDED + EVIDENCE DIAGNOSIS</span><h2>${esc(p.name)}</h2><p class="meta">${esc(p.description)}</p></button>`).join("")}</div>`;
   app.querySelectorAll("[data-related-system]").forEach(b=>b.onclick=()=>setRoute({system:b.dataset.relatedSystem}));
   app.querySelectorAll("[data-problem]").forEach(b=>b.onclick=()=>{const p=asset.problems.find(x=>x.id===b.dataset.problem);clearSession(asset.id,p.id);setRoute({asset:asset.id,problem:p.id,step:p.startStep})});
-  bindDiagnosticPanel(asset);
 }
+
+function fiqGuidedObservations(data){
+  return Object.fromEntries((data.answers||[]).map(answer=>[`guided:${answer.stepId}`,answer.answer==="YES"?"yes":"no"]));
+}
+
+function fiqDiagnosticWords(text){
+  const ignored=new Set(["the","and","for","with","from","this","that","into","not","are","was","has","have","present","problem","issue","failure"]);
+  return new Set(String(text||"").toLowerCase().replace(/[^a-z0-9]+/g," ").split(" ").filter(word=>word.length>2&&!ignored.has(word)));
+}
+
+function fiqDiagnosticOverlap(a,b){
+  const left=fiqDiagnosticWords(a),right=fiqDiagnosticWords(b);
+  return [...left].filter(word=>right.has(word)).length;
+}
+
+function fiqInferResultEvidence(profile,problemId,result){
+  const text=`${result?.title||""} ${result?.cause||""}`;
+  return Object.fromEntries(fiqObservationItems(profile,problemId).filter(([,label])=>fiqDiagnosticOverlap(text,label)>=2).map(([key])=>[key,"yes"]));
+}
+
+function fiqKnownReadingCount(values){
+  return Object.values(values||{}).filter(value=>value!==""&&value!==null&&value!==undefined&&Number.isFinite(Number(value))).length;
+}
+
+function fiqUnifiedAnalysis(asset,problem,data,result){
+  const profile=profileForAsset(asset);
+  const measurements=loadMeasurements(asset.id);
+  const inferred=profile?fiqInferResultEvidence(profile,problem.id,result):{};
+  const observations={...inferred,...(data.evidence||{}),...fiqGuidedObservations(data)};
+  const modeledRankings=profile?fiqRankFailuresV05(profile,problem.id,measurements,observations):[];
+  const quality=profile?fiqEvidenceQuality(profile,problem.id,measurements,observations):{completeness:0,nextEvidence:[]};
+  const contradictions=profile?fiqDetectContradictions(profile,measurements,observations):[];
+  const readingCount=fiqKnownReadingCount(measurements);
+  const score=Math.max(45,Math.min(95,55+(data.answers||[]).length*9+Math.min(15,readingCount*3)-contradictions.length*5));
+  const label=score>=85?"Strong":score>=70?"Supported":"Preliminary";
+  const guidedRanking=result?{title:result.title,action:result.action,reference:`Guided path completed for ${problem.name}. Rating reflects the recorded checks and readings.`,evidenceCount:(data.answers||[]).length,contradictionCount:contradictions.length,relative:score}:null;
+  const evidenceBacked=modeledRankings.filter(item=>(item.evidenceCount>0||item.contradictionCount>0)&&fiqDiagnosticOverlap(item.title,result?.title)<2).slice(0,2);
+  const rankings=[guidedRanking,...evidenceBacked].filter(Boolean);
+  return {profile,measurements,observations,rankings,quality,contradictions,score,label,readingCount};
+}
+
+function renderUnifiedDiagnosis(asset,problem,result,data){
+  const analysis=fiqUnifiedAnalysis(asset,problem,data,result);
+  if(!analysis.profile)return "";
+  const sections=fiqMeasurementSections(analysis.profile,problem.id,analysis.measurements);
+  const observationCount=fiqObservationItems(analysis.profile,problem.id).length;
+  const alternatives=analysis.rankings.slice(0,3);
+  return `<section class="unified-diagnosis">
+    <div class="unified-rating ${analysis.label.toLowerCase()}">
+      <div><span class="status">DIAGNOSTIC SUPPORT RATING</span><h3>${analysis.label} support for this conclusion</h3><p>The rating reflects ${data.answers.length} guided check${data.answers.length===1?"":"s"}${analysis.readingCount?` and ${analysis.readingCount} recorded reading${analysis.readingCount===1?"":"s"}`:""}. It is an evidence-quality score, not the probability that a component has failed.</p></div>
+      <strong>${analysis.score}<small>/100</small></strong>
+    </div>
+    ${analysis.contradictions.length?`<div class="contradictions"><strong>Resolve conflicting evidence</strong>${analysis.contradictions.map(item=>`<p>${esc(item)}</p>`).join("")}</div>`:""}
+    <div class="diagnostic-results unified-rankings"><h3>Ranked likely causes</h3>${fiqRenderRankings(alternatives)}</div>
+    <details class="unified-evidence-editor">
+      <summary>Improve the rating with optional field evidence</summary>
+      <p class="meta">Add only readings or observations you can verify. Your guided answers are already included automatically.</p>
+      <div class="quick-measurements"><div class="quick-heading"><strong>Highest-value readings</strong><span>${sections.quickCount} relevant field${sections.quickCount===1?"":"s"}</span></div><div class="measurement-grid">${sections.quick}</div></div>
+      ${sections.advancedCount?`<details class="advanced-measurements"><summary>Other available readings (${sections.advancedCount})</summary><div class="measurement-grid">${sections.advanced}</div></details>`:""}
+      <div class="evidence-box"><div class="evidence-editor-heading"><strong>Confirm field observations</strong><span>Yes / No / Unknown</span></div><div class="evidence-grid">${fiqObservationMarkup(analysis.profile,problem.id,"quick")}</div></div>
+      ${observationCount>5?`<details class="evidence-box"><summary>Additional observations (${observationCount-5})</summary><div class="evidence-grid">${fiqObservationMarkup(analysis.profile,problem.id,"advanced")}</div></details>`:""}
+      <div class="button-row diagnostic-actions"><button type="button" id="update-unified-rating" class="primary-button">Update Ratings</button><button type="button" id="clear-unified-evidence" class="secondary-button">Clear Added Evidence</button></div>
+    </details>
+  </section>`;
+}
+
+function bindUnifiedDiagnosis(asset,problem){
+  const update=document.getElementById("update-unified-rating");
+  if(!update)return;
+  const data=readSession(asset.id,problem.id);
+  const guided=fiqGuidedObservations(data);
+  const step=steps[getRoute().step];
+  const inferred=fiqInferResultEvidence(profileForAsset(asset),problem.id,step);
+  const savedEvidence={...inferred,...(data.evidence||{}),...guided};
+  fiqBindTriState();
+  document.querySelectorAll("[data-evidence-row]").forEach(row=>{
+    const state=savedEvidence[row.dataset.evidenceRow]||"unknown";
+    row.querySelectorAll("[data-evidence]").forEach(button=>button.classList.toggle("active",button.dataset.state===state));
+  });
+  update.onclick=()=>{
+    const measurements={...loadMeasurements(asset.id),...Object.fromEntries([...document.querySelectorAll("[data-measure]")].map(input=>[input.dataset.measure,input.value]))};
+    saveMeasurements(asset.id,measurements);
+    data.evidence=Object.fromEntries(Object.entries(fiqCollectObservations()).filter(([,state])=>state!=="unknown"));
+    writeSession(asset.id,problem.id,data);
+    render();
+    document.querySelector(".unified-diagnosis")?.scrollIntoView({behavior:"smooth",block:"start"});
+  };
+  document.getElementById("clear-unified-evidence").onclick=()=>{
+    saveMeasurements(asset.id,{});
+    data.evidence={};
+    writeSession(asset.id,problem.id,data);
+    render();
+    document.querySelector(".unified-diagnosis")?.scrollIntoView({behavior:"smooth",block:"start"});
+  };
+}
+
 function renderStep(asset,problem,stepId){
   const s=steps[stepId];pageTitle.textContent=`${asset.id}: ${problem.name}`;homeButton.hidden=false;
   if(!s){app.innerHTML=`<div class="result-card"><h2>Step not found</h2></div>`;return}
@@ -162,7 +256,8 @@ function renderStep(asset,problem,stepId){
   } else {
     const manual=asset.manual?`<a class="manual-button" href="${asset.manual}" target="_blank" rel="noopener">Open Manufacturer Manual</a>`:"";
     const checks=data.answers.length?`<div class="checks"><h3>Checks completed</h3>${data.answers.map(x=>`<div class="check-row"><span class="${x.answer==="YES"?"check-yes":"check-no"}">${esc(x.answer)}</span><p>${esc(x.question)}</p></div>`).join("")}</div>`:"";
-    app.innerHTML=`<div class="result-card result-final"><div class="progress-track"><div class="progress-fill" style="width:100%"></div></div><span class="status">DIAGNOSTIC RESULT</span><h2>${esc(s.title)}</h2><p><strong>Likely cause:</strong><br>${esc(s.cause)}</p><p><strong>Recommended action:</strong><br>${esc(s.action)}</p><div class="warning"><strong>Safety:</strong> ${esc(s.safety)}</div>${checks}<div class="button-row"><button id="copy-summary" class="primary-button">Copy Troubleshooting Summary</button><button id="restart" class="secondary-button">Restart Guide</button></div><button id="back" class="text-button">Back to ${esc(asset.id)}</button><div class="manual-wrap">${manual}</div></div>`;
+    app.innerHTML=`<div class="result-card result-final"><div class="progress-track"><div class="progress-fill" style="width:100%"></div></div><span class="status">GUIDED DIAGNOSTIC RESULT</span><h2>${esc(s.title)}</h2><p><strong>Likely cause:</strong><br>${esc(s.cause)}</p><p><strong>Recommended action:</strong><br>${esc(s.action)}</p><div class="warning"><strong>Safety:</strong> ${esc(s.safety)}</div>${checks}${renderUnifiedDiagnosis(asset,problem,s,data)}<div class="button-row"><button id="copy-summary" class="primary-button">Copy Troubleshooting Summary</button><button id="restart" class="secondary-button">Restart Guide</button></div><button id="back" class="text-button">Back to ${esc(asset.id)}</button><div class="manual-wrap">${manual}</div></div>`;
+    bindUnifiedDiagnosis(asset,problem);
     document.getElementById("copy-summary").onclick=e=>copyText(troubleshootingSummary(asset,problem,s),e.currentTarget);
     document.getElementById("restart").onclick=()=>{clearSession(asset.id,problem.id);setRoute({asset:asset.id,problem:problem.id,step:problem.startStep})};
     document.getElementById("back").onclick=()=>setRoute({asset:asset.id});
