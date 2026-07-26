@@ -62,6 +62,10 @@ const diagnosticProfiles = {
       {id:"terminalAirflowSetpoint",label:"CAV/VAV airflow setpoint",unit:"CFM",type:"number",step:"1"},
       {id:"terminalDamperCommand",label:"Terminal damper command",unit:"%",type:"number",step:"1"},
       {id:"terminalDamperPosition",label:"Terminal damper position",unit:"%",type:"number",step:"1"},
+      {id:"terminalHeatingValveCommand",label:"VAV heating-valve command",unit:"%",type:"number",step:"1"},
+      {id:"terminalHeatingValvePosition",label:"VAV heating-valve physical position",unit:"%",type:"number",step:"1"},
+      {id:"terminalInletTemp",label:"VAV inlet-air temperature",unit:"Â°F",type:"number",step:"0.1"},
+      {id:"terminalDischargeTemp",label:"VAV discharge-air temperature",unit:"Â°F",type:"number",step:"0.1"},
       {id:"chilledWaterSupply",label:"Chilled-water supply temperature",unit:"°F",type:"number",step:"0.1"},
       {id:"chilledWaterSetpoint",label:"Active chilled-water setpoint",unit:"°F",type:"number",step:"0.1"},
       {id:"hotWaterSupply",label:"Hot-water supply temperature",unit:"°F",type:"number",step:"0.1"},
@@ -269,6 +273,18 @@ function diagnosticResults(profile,values){
       const error=Math.abs(damperCommand-damperPosition);
       r.push({label:"Terminal damper tracking error",value:`${fmt(error)} percentage points`,state:error>20?"high":error>10?"caution":"normal",
         note:error>10?"Command and position differ. Verify whether position is true feedback, then inspect the actuator, linkage, controls, and damper movement.":"Entered command and position are tracking reasonably closely."});
+    }
+    const terminalHeatingCommand=n(values.terminalHeatingValveCommand),terminalHeatingPosition=n(values.terminalHeatingValvePosition);
+    if(terminalHeatingCommand!==null&&terminalHeatingPosition!==null){
+      const error=Math.abs(terminalHeatingCommand-terminalHeatingPosition);
+      r.push({label:"VAV heating-valve tracking error",value:`${fmt(error)} percentage points`,state:error>20?"high":error>10?"caution":"normal",
+        note:error>10?"VAV heating-valve command and physical position differ. Inspect the actuator, linkage, valve stroke, and controls.":"Entered VAV heating-valve command and position are tracking."});
+    }
+    const terminalInletTemp=n(values.terminalInletTemp),terminalDischargeTemp=n(values.terminalDischargeTemp);
+    if(terminalInletTemp!==null&&terminalDischargeTemp!==null){
+      const rise=terminalDischargeTemp-terminalInletTemp;
+      r.push({label:"VAV discharge-air temperature rise",value:`${fmt(rise)}Â°F`,state:rise<2&&terminalHeatingCommand!==null&&terminalHeatingCommand>=50?"high":rise>5&&terminalHeatingCommand!==null&&terminalHeatingCommand<=10?"high":"info",
+        note:rise<2&&terminalHeatingCommand!==null&&terminalHeatingCommand>=50?"Heating is commanded but there is little temperature rise. Check valve position, hot-water availability, coil airflow, and sensor accuracy.":rise>5&&terminalHeatingCommand!==null&&terminalHeatingCommand<=10?"The VAV is adding heat with little or no heating command. Check for valve leakage, failed closure, linkage, and sensor accuracy.":"Use the temperature rise with heating demand, valve command, and physical position to evaluate VAV heat."});
     }
     const coolingPosition=n(values.coolingValvePosition),heatingPosition=n(values.heatingValvePosition);
     if(coolingCommand!==null&&coolingPosition!==null){

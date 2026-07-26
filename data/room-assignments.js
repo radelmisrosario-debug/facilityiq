@@ -12,7 +12,13 @@ const facilityIqDedicatedRoomEquipment = {
 
 const facilityIqRoomTerminals = Object.fromEntries(
   [...new Set(Object.values(facilityIqRoomAssignments).flat())]
-    .map(room => [room,{room,type:"CAV/VAV",tag:null,status:"Type and tag to be confirmed"}])
+    .map(room => [room,{
+      room,
+      type:"CAV/VAV",
+      tag:null,
+      heatingValve:"Present on every VAV terminal",
+      status:"Terminal type and tag to be confirmed; every confirmed VAV has a heating valve"
+    }])
 );
 
 function facilityIqAhusForRoom(room) {

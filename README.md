@@ -21,7 +21,8 @@ AHU pneumatic control circuit.
 Room 503 is excluded from the AHU-02 room list. It is mapped to the dedicated
 Bry-Air dehumidifier and 503 Aircon Tech chiller system instead.
 
-Each AHU-served area is modeled with a dedicated CAV/VAV terminal. Until the
+Each AHU-served area is modeled with a dedicated CAV/VAV terminal, and every VAV
+has a heating valve. Until the
 terminal schedule is entered, FacilityIQ labels its exact type and tag as
 unconfirmed. Room-comfort diagnosis checks the terminal airflow setpoint,
 measured airflow, damper command/position, and inlet pressure before escalating
@@ -44,7 +45,8 @@ use operating-under-load, isolated-test, warm-up, standby, and protection
 states; cooling and heating calls appear only on relevant HVAC equipment.
 
 Room and laboratory comfort troubleshooting includes both too-hot and too-cold
-paths. The cold-space guide checks Desigo heating demand, the dedicated CAV/VAV,
+paths. The cold-space guide checks Desigo heating demand, the dedicated CAV/VAV
+airflow and VAV heating-valve command, physical position, and temperature rise,
 AHU sequence, hot-water setpoint and availability, control air, heating/cooling
 valve positions, and heating-coil performance.
 

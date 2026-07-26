@@ -254,7 +254,7 @@ const facilityIqKnowledgeBase = {
       },
       {
         id:"terminal-airflow",
-        title:"Dedicated CAV/VAV terminal is not delivering required airflow",
+        title:"Room terminal airflow or VAV heating valve is causing overheating",
         base:18,
         required:["terminalAirflow","terminalAirflowSetpoint"],
         evidence:[
@@ -262,10 +262,13 @@ const facilityIqKnowledgeBase = {
           {kind:"observation",key:"terminalDamperNotResponding",weight:46},
           {kind:"observation",key:"terminalInletPressureLow",weight:32},
           {kind:"observation",key:"terminalSensorMismatch",weight:34},
+          {kind:"observation",key:"terminalHeatingValveNotClosing",weight:52},
+          {kind:"observation",key:"terminalUnexpectedHeat",weight:44},
+          {kind:"measurement",key:"terminalDischargeTemp",op:">",other:"terminalInletTemp",weight:28},
           {kind:"measurement",key:"terminalAirflow",op:"<",other:"terminalAirflowSetpoint",weight:30}
         ],
-        action:"Compare airflow setpoint with measured airflow and damper command with position. Verify inlet static pressure, actuator/linkage, sensor tubing, flow pickup, and downstream path.",
-        reference:"Each served room has a dedicated CAV/VAV terminal; exact type and tag remain to be confirmed."
+        action:"Compare airflow setpoint with measured airflow and damper command with position. If it is a VAV, compare heating-valve command with physical position and inlet with discharge temperature; verify valve closure, hot-water flow, actuator/linkage, inlet static pressure, sensor tubing, flow pickup, and downstream path.",
+        reference:"Each served room has a dedicated CAV/VAV terminal; every VAV has a heating valve. Exact terminal type and tag remain to be confirmed."
       },
       {
         id:"chilled-water-plant",
@@ -495,6 +498,10 @@ const facilityIqObservations = {
     ["terminalDamperNotResponding","Terminal damper command does not match physical position or response"],
     ["terminalInletPressureLow","Primary-air static pressure at the terminal inlet is inadequate"],
     ["terminalSensorMismatch","Terminal airflow sensor disagrees with field verification"],
+    ["terminalHeatingValveNotClosing","VAV heating valve is commanded closed but is open, leaking, or still adding heat"],
+    ["terminalHeatingValveNotOpening","VAV heating valve is commanded open but does not physically open"],
+    ["terminalReheatNoTemperatureRise","VAV has heating demand but discharge air does not warm above inlet air"],
+    ["terminalUnexpectedHeat","VAV discharge air is warmer than inlet air without a heating call"],
     ["chilledWaterAboveSetpoint","Actual chilled-water supply temperature is above the active setpoint"],
     ["lowLoopDp","Chilled-water loop differential pressure is low"],
     ["multipleAhusWarm","Multiple AHUs or areas are warm at the same time"],
