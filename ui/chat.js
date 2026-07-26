@@ -1,7 +1,14 @@
 const facilityIqChat = (() => {
   const storageKey = "facilityIqChatV1";
   const state = { open:false, messages:[], asset:null, problem:null, stepId:null };
-  const clean = value => String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const clean = value => String(value || "").toLowerCase()
+    .replace(/won['’]?t/g,"will not").replace(/can['’]?t/g,"cannot")
+    .replace(/isn['’]?t/g,"is not").replace(/doesn['’]?t/g,"does not")
+    .replace(/firing/g,"fire").replace(/starting/g,"start").replace(/running/g,"run")
+    .replace(/cooling/g,"cool").replace(/heating/g,"heat")
+    .replace(/tripped|tripping|\btrips\b/g,"trip").replace(/leaking/g,"leak")
+    .replace(/overheating/g,"overheat").replace(/vibrating/g,"vibration")
+    .replace(/[^a-z0-9]+/g, " ").trim();
   const safe = value => String(value).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
   const words = value => clean(value).split(" ").filter(word => word.length > 1);
 
@@ -14,7 +21,16 @@ const facilityIqChat = (() => {
   }
   function assetText(asset){return [asset.id,asset.name,asset.category,asset.manufacturer,asset.model,asset.location,...facilityIqRoomsForAsset(asset.id).flatMap(room=>[`room ${room}`,`lab ${room}`,`laboratory ${room}`])].join(" ")}
   function assetMatches(query){return Object.values(assets).map(asset=>({asset,score:score(query,assetText(asset))})).filter(x=>x.score).sort((a,b)=>b.score-a.score).slice(0,4)}
-  function problemMatches(query,asset){return asset.problems.map(problem=>({problem,score:score(query,`${problem.name} ${problem.description}`)})).filter(x=>x.score).sort((a,b)=>b.score-a.score)}
+  function symptomOnlyQuery(query,asset){
+    const assetWords=new Set(words(assetText(asset)));
+    const ignored=new Set(["is","the","a","an","has","have","with","it","and","on","at","in","does"]);
+    return words(query).filter(word=>!assetWords.has(word)&&!ignored.has(word)).join(" ");
+  }
+  function problemMatches(query,asset){
+    const symptomQuery=symptomOnlyQuery(query,asset);
+    if(!symptomQuery)return [];
+    return asset.problems.map(problem=>({problem,score:score(symptomQuery,`${problem.id} ${problem.name} ${problem.description}`)})).filter(x=>x.score).sort((a,b)=>b.score-a.score);
+  }
   function globalProblemMatches(query){return Object.values(assets).flatMap(asset=>problemMatches(query,asset).map(x=>({asset,...x}))).sort((a,b)=>b.score-a.score).slice(0,6)}
   function save(){try{localStorage.setItem(storageKey,JSON.stringify({messages:state.messages.slice(-40),assetId:state.asset?.id,problemId:state.problem?.id,stepId:state.stepId}))}catch(_){}}
   function restore(){try{const x=JSON.parse(localStorage.getItem(storageKey)||"null");if(!x)return;state.messages=Array.isArray(x.messages)?x.messages:[];state.asset=x.assetId?assets[x.assetId]:null;state.problem=state.asset?.problems.find(p=>p.id===x.problemId)||null;state.stepId=x.stepId||null}catch(_){}}
@@ -47,12 +63,15 @@ const facilityIqChat = (() => {
     if(!request.ahus.length)return message("assistant",`I don’t have a serving AHU assignment for Room ${request.room} yet. Verify the room number, then browse the equipment list or ask your controls operator.`,{eyebrow:"Room lookup",actions:[{label:"Browse equipment",action:"browse"}]});
     const names=request.ahus.map(asset=>asset.id).join(" and ");
     const conditionText=request.condition==="temperature concern"?"has a temperature concern":`is too ${request.condition}`;
-    message("assistant",`Room ${request.room} ${conditionText}. First, check the room in Desigo: confirm the current temperature, occupied/unoccupied mode, effective heating and cooling setpoints, and whether a temporary setpoint override is active.\n\nNext, check the room’s dedicated CAV/VAV terminal. Compare its airflow setpoint with measured airflow, damper command with position, and verify primary-air inlet pressure. The terminal type and tag still need to be confirmed.\n\nRoom ${request.room} is served by ${names}. If the terminal is receiving warm air, compare the active chilled-water setpoint with actual chilled-water supply temperature. Then verify pressure from the dedicated Control Air Compressor and Control Air Dryer at the AHU branch: the heating valve is normally open and the cooling valve is normally closed, so loss of control air can leave heating open while cooling stays closed. House Air Compressors 01–03 serve laboratory compressed air and are not part of this AHU control circuit.\n\nContinue with AHU supply-air temperature, fan/VFD status, valve command versus physical position, and coil water flow.`,{
+    const coldGuidance=`Room ${request.room} ${conditionText}. First, check Desigo for the current temperature, effective heating setpoint, occupancy mode, schedule, and overrides.\n\nNext, check the dedicated CAV/VAV terminal: compare airflow setpoint with measured airflow, damper command with position, and verify primary-air inlet pressure. The exact terminal type and tag still need confirmation.\n\nRoom ${request.room} is served by ${names}. If the AHU sequence calls for heating, compare the active hot-water setpoint with actual supply temperature and verify HWP status and loop differential pressure. Check pressure from the dedicated Control Air Compressor and dryer, then confirm the normally-open heating valve physically opens and the normally-closed cooling valve fully closes.\n\nContinue with AHU supply-air temperature, heating-coil flow and temperature change, infiltration, sensor accuracy, and whether any local or terminal heat is part of the approved sequence.`;
+    const hotGuidance=`Room ${request.room} ${conditionText}. First, check the room in Desigo: confirm the current temperature, occupied/unoccupied mode, effective heating and cooling setpoints, and whether a temporary setpoint override is active.\n\nNext, check the room’s dedicated CAV/VAV terminal. Compare its airflow setpoint with measured airflow, damper command with position, and verify primary-air inlet pressure. The terminal type and tag still need to be confirmed.\n\nRoom ${request.room} is served by ${names}. If the terminal is receiving warm air, compare the active chilled-water setpoint with actual chilled-water supply temperature. Then verify pressure from the dedicated Control Air Compressor and Control Air Dryer at the AHU branch: the heating valve is normally open and the cooling valve is normally closed, so loss of control air can leave heating open while cooling stays closed. House Air Compressors 01–03 serve laboratory compressed air and are not part of this AHU control circuit.\n\nContinue with AHU supply-air temperature, fan/VFD status, valve command versus physical position, and coil water flow.`;
+    message("assistant",request.condition==="cold"?coldGuidance:hotGuidance,{
       eyebrow:"Room comfort troubleshooting",
       detail:request.ahus.length>1?"This room appears on more than one AHU assignment. Confirm the active serving unit in Desigo or the current controls graphics before troubleshooting equipment.":"",
       actions:request.ahus.flatMap(asset=>[
         {label:`Open ${asset.id}`,action:"asset-page",value:asset.id},
-        ...(request.condition==="hot"?[{label:`Start ${asset.id} high-temperature checks`,action:"problem",value:`${asset.id}|high-space-temperature`}]:[])
+        ...(request.condition==="hot"?[{label:`Start ${asset.id} high-temperature checks`,action:"problem",value:`${asset.id}|high-space-temperature`}]:[]),
+        ...(request.condition==="cold"?[{label:`Start ${asset.id} too-cold checks`,action:"problem",value:`${asset.id}|low-space-temperature`}]:[])
       ])
     });
   }
@@ -68,7 +87,15 @@ const facilityIqChat = (() => {
     const equipment=assetMatches(query), current=state.asset?problemMatches(query,state.asset):[], issues=globalProblemMatches(query);
     if(state.asset&&current[0]?.score>=4)return message("assistant",`That sounds closest to “${current[0].problem.name}” for ${state.asset.id}. I’ll begin with a safe first check.`,{actions:[{label:"Start checks",action:"problem",value:`${state.asset.id}|${current[0].problem.id}`}]});
     if(equipment.length){
-      if(equipment[0].score>=8||equipment.length===1){state.asset=equipment[0].asset;state.problem=null;state.stepId=null;return message("assistant",`I found ${state.asset.id}, ${state.asset.name}, in ${state.asset.location}. What is it doing, and is there an alarm or fault code?`,{eyebrow:"Equipment identified",actions:problemActions(state.asset)})}
+      if(equipment[0].score>=8||equipment.length===1){
+        state.asset=equipment[0].asset;state.problem=null;state.stepId=null;
+        const inferredProblem=problemMatches(query,state.asset)[0];
+        if(inferredProblem?.score>=4){
+          message("assistant",`I identified ${state.asset.id}, ${state.asset.name}, and matched the issue to “${inferredProblem.problem.name}.” I’ll begin with the first safe check.`,{eyebrow:"Asset and symptom identified"});
+          return chooseProblem(state.asset,inferredProblem.problem);
+        }
+        return message("assistant",`I found ${state.asset.id}, ${state.asset.name}, in ${state.asset.location}. What is it doing, and is there an alarm or fault code?`,{eyebrow:"Equipment identified",actions:problemActions(state.asset)})
+      }
       return message("assistant","I found a few possible assets. Which one are you working on?",{actions:equipment.map(x=>({label:`${x.asset.id} · ${x.asset.name}`,action:"asset",value:x.asset.id}))});
     }
     if(issues.length)return message("assistant","That issue appears in several equipment guides. Select the asset that matches what you’re working on.",{actions:issues.map(x=>({label:`${x.asset.id} · ${x.problem.name}`,action:"problem",value:`${x.asset.id}|${x.problem.id}`}))});

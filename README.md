@@ -43,6 +43,15 @@ Operating-condition choices are equipment-specific. For example, vacuum pumps
 use operating-under-load, isolated-test, warm-up, standby, and protection
 states; cooling and heating calls appear only on relevant HVAC equipment.
 
+Room and laboratory comfort troubleshooting includes both too-hot and too-cold
+paths. The cold-space guide checks Desigo heating demand, the dedicated CAV/VAV,
+AHU sequence, hot-water setpoint and availability, control air, heating/cooling
+valve positions, and heating-coil performance.
+
+The chat can identify an asset and symptom in the same sentence, such as
+"Boiler 03 is not firing," "House Air Compressor 02 will not build pressure,"
+or "AHU-06 has low airflow," and start the matching guide directly.
+
 V08 introduces a dedicated home screen with three clear starting points:
 
 - Troubleshoot an individual asset

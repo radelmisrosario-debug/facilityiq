@@ -57,15 +57,20 @@ const diagnosticProfiles = {
       {id:"mixedAir",label:"Mixed-air temperature",unit:"°F",type:"number",step:"0.1"},
       {id:"roomTemperature",label:"Room temperature",unit:"°F",type:"number",step:"0.1"},
       {id:"roomCoolingSetpoint",label:"Effective room cooling setpoint",unit:"°F",type:"number",step:"0.1"},
+      {id:"roomHeatingSetpoint",label:"Effective room heating setpoint",unit:"°F",type:"number",step:"0.1"},
       {id:"terminalAirflow",label:"CAV/VAV measured airflow",unit:"CFM",type:"number",step:"1"},
       {id:"terminalAirflowSetpoint",label:"CAV/VAV airflow setpoint",unit:"CFM",type:"number",step:"1"},
       {id:"terminalDamperCommand",label:"Terminal damper command",unit:"%",type:"number",step:"1"},
       {id:"terminalDamperPosition",label:"Terminal damper position",unit:"%",type:"number",step:"1"},
       {id:"chilledWaterSupply",label:"Chilled-water supply temperature",unit:"°F",type:"number",step:"0.1"},
       {id:"chilledWaterSetpoint",label:"Active chilled-water setpoint",unit:"°F",type:"number",step:"0.1"},
+      {id:"hotWaterSupply",label:"Hot-water supply temperature",unit:"°F",type:"number",step:"0.1"},
+      {id:"hotWaterSetpoint",label:"Active hot-water setpoint",unit:"°F",type:"number",step:"0.1"},
       {id:"controlAirPressure",label:"Control-air pressure at AHU",unit:"PSI",type:"number",step:"0.1"},
       {id:"coolingValveCommand",label:"Cooling-valve command",unit:"%",type:"number",step:"1"},
       {id:"heatingValveCommand",label:"Heating-valve command",unit:"%",type:"number",step:"1"},
+      {id:"coolingValvePosition",label:"Cooling-valve physical position",unit:"%",type:"number",step:"1"},
+      {id:"heatingValvePosition",label:"Heating-valve physical position",unit:"%",type:"number",step:"1"},
       {id:"staticPressure",label:"Duct static pressure",unit:"in. w.c.",type:"number",step:"0.01"},
       {id:"speed",label:"Fan VFD speed",unit:"Hz",type:"number",step:"0.1"},
       {id:"motorAmps",label:"Fan motor current",unit:"A",type:"number",step:"0.1"},
@@ -241,6 +246,18 @@ function diagnosticResults(profile,values){
       r.push({label:"Room cooling deviation",value:`${fmt(deviation)}°F`,state:deviation>2?"high":deviation>0?"caution":"normal",
         note:deviation>0?"Room temperature is above the entered effective cooling setpoint. Confirm occupancy, overrides, and sensor accuracy before escalating.":"The entered room temperature is not above its effective cooling setpoint."});
     }
+    const roomHeatingSetpoint=n(values.roomHeatingSetpoint);
+    if(roomTemp!==null&&roomHeatingSetpoint!==null){
+      const heatingDeficit=roomHeatingSetpoint-roomTemp;
+      r.push({label:"Room heating deficit",value:`${fmt(heatingDeficit)}°F`,state:heatingDeficit>2?"high":heatingDeficit>0?"caution":"normal",
+        note:heatingDeficit>0?"Room temperature is below the entered effective heating setpoint. Confirm occupancy, overrides, terminal operation, and sensor accuracy.":"The entered room temperature is not below its effective heating setpoint."});
+    }
+    const hotWaterSupply=n(values.hotWaterSupply),hotWaterSetpoint=n(values.hotWaterSetpoint);
+    if(hotWaterSupply!==null&&hotWaterSetpoint!==null){
+      const hotWaterDeficit=hotWaterSetpoint-hotWaterSupply;
+      r.push({label:"Hot-water setpoint deficit",value:`${fmt(hotWaterDeficit)}°F`,state:hotWaterDeficit>5?"high":hotWaterDeficit>2?"caution":"normal",
+        note:hotWaterDeficit>2?"Hot-water supply is below the entered active setpoint. Check Desigo reset logic, enabled boilers, HWP status, loop DP, and distribution.":"Hot-water supply is reasonably close to the entered setpoint."});
+    }
     const terminalFlow=n(values.terminalAirflow),terminalFlowSetpoint=n(values.terminalAirflowSetpoint);
     if(terminalFlow!==null&&terminalFlowSetpoint!==null&&terminalFlowSetpoint>0){
       const delivered=terminalFlow/terminalFlowSetpoint*100;
@@ -252,6 +269,17 @@ function diagnosticResults(profile,values){
       const error=Math.abs(damperCommand-damperPosition);
       r.push({label:"Terminal damper tracking error",value:`${fmt(error)} percentage points`,state:error>20?"high":error>10?"caution":"normal",
         note:error>10?"Command and position differ. Verify whether position is true feedback, then inspect the actuator, linkage, controls, and damper movement.":"Entered command and position are tracking reasonably closely."});
+    }
+    const coolingPosition=n(values.coolingValvePosition),heatingPosition=n(values.heatingValvePosition);
+    if(coolingCommand!==null&&coolingPosition!==null){
+      const error=Math.abs(coolingCommand-coolingPosition);
+      r.push({label:"Cooling-valve tracking error",value:`${fmt(error)} percentage points`,state:error>20?"high":error>10?"caution":"normal",
+        note:error>10?"Cooling-valve command and physical position differ. Check control air, actuator/positioner, linkage, and valve stroke.":"Cooling-valve command and entered position are tracking."});
+    }
+    if(heatingCommand!==null&&heatingPosition!==null){
+      const error=Math.abs(heatingCommand-heatingPosition);
+      r.push({label:"Heating-valve tracking error",value:`${fmt(error)} percentage points`,state:error>20?"high":error>10?"caution":"normal",
+        note:error>10?"Heating-valve command and physical position differ. Check control air, actuator/positioner, linkage, and valve stroke.":"Heating-valve command and entered position are tracking."});
     }
   }
   if(profile==="dehumidifier"){
