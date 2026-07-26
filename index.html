@@ -18,6 +18,16 @@
     </header>
     <section id="app" aria-live="polite"></section>
   </main>
+  <nav class="corner-menu" aria-label="FacilityIQ section navigation">
+    <button id="corner-menu-button" type="button" aria-expanded="false" aria-controls="corner-menu-list">Menu <span aria-hidden="true">▾</span></button>
+    <div id="corner-menu-list" hidden>
+      <button type="button" data-corner-nav="home">Home</button>
+      <button type="button" data-corner-nav="assets">Troubleshoot an Asset</button>
+      <button type="button" data-corner-nav="systems">Plant Systems</button>
+      <button type="button" data-corner-nav="manual">Facility Knowledge Base</button>
+      <button type="button" data-corner-nav="ask">Ask FacilityIQ</button>
+    </div>
+  </nav>
   <script src="data/catalog.js?v=14"></script>
 <script src="data/room-assignments.js?v=10"></script>
 <script src="data/hvac-expansion.js?v=14"></script>
@@ -27,12 +37,12 @@
 <script src="data/manual-guidance.js?v=20"></script>
 <script src="data/knowledge-base.js?v=10"></script>
 <script src="data/system-model.js?v=13"></script>
-<script src="data/operations-manual.js?v=14"></script>
+<script src="data/operations-manual.js?v=23"></script>
 <script src="engine/diagnostics.js?v=19"></script>
 <script src="engine/rule-engine.js?v=10"></script>
 <script src="engine/evidence-coverage.js?v=10"></script>
 <script src="engine/v04-ui.js?v=10"></script>
-  <script src="ui/app.js?v=21"></script>
+  <script src="ui/app.js?v=23"></script>
 <script src="ui/chat.js?v=19"></script>
 </body>
 </html>

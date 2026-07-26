@@ -64,7 +64,7 @@ function renderOperationsManual(){
     const query=input.value.trim().toLowerCase();
     const sections=facilityOperationsManual.sections.filter(section=>(activeCategory==="All"||section.category===activeCategory)&&[section.title,section.category,section.summary,...section.facts,...section.operations,section.safety,...section.verify].join(" ").toLowerCase().includes(query));
     toc.innerHTML=sections.map(section=>`<button type="button" data-manual-jump="${esc(section.id)}"><span>${esc(section.category)}</span>${esc(section.title)}</button>`).join("");
-    results.innerHTML=sections.length?sections.map((section,index)=>`<article class="manual-section" id="manual-${esc(section.id)}"><div class="manual-section-head"><span>${esc(section.category)}</span><h3>${esc(section.title)}</h3><p>${esc(section.summary)}</p></div><div class="manual-section-body"><section><h4>How the system works</h4><ul>${section.facts.map(item=>`<li>${esc(item)}</li>`).join("")}</ul></section><section><h4>Field checks</h4><ol>${section.operations.map(item=>`<li>${esc(item)}</li>`).join("")}</ol></section><div class="manual-safety"><strong>Safety requirements</strong><p>${esc(section.safety)}</p></div>${section.verify.length?`<details class="manual-verify"${index===0?" open":""}><summary>Confirm before relying on this information</summary><ul>${section.verify.map(item=>`<li>${esc(item)}</li>`).join("")}</ul></details>`:""}</div></article>`).join(""):`<div class="result-card manual-empty"><h2>No matching section</h2><p>Clear the category filter or try a shorter search such as “AHU,” “boiler,” “exhaust,” or “PM.”</p><button type="button" id="manual-clear" class="secondary-button">Clear filters</button></div>`;
+    results.innerHTML=sections.length?sections.map((section,index)=>`<article class="manual-section" id="manual-${esc(section.id)}"><div class="manual-section-head"><span>${esc(section.category)}</span><h3>${esc(section.title)}</h3><p>${esc(section.summary)}</p></div><div class="manual-section-body"><section><h4>System operation</h4><ul>${section.facts.map(item=>`<li>${esc(item)}</li>`).join("")}</ul></section><section><h4>Operating and field checks</h4><ol>${section.operations.map(item=>`<li>${esc(item)}</li>`).join("")}</ol></section><div class="manual-safety"><strong>Safety requirements</strong><p>${esc(section.safety)}</p></div>${section.verify.length?`<details class="manual-verify"${index===0?" open":""}><summary>Field verification and record control</summary><ul>${section.verify.map(item=>`<li>${esc(item)}</li>`).join("")}</ul></details>`:""}</div></article>`).join(""):`<div class="result-card manual-empty"><h2>No matching section</h2><p>Clear the category filter or try a shorter search such as “AHU,” “boiler,” “exhaust,” or “PM.”</p><button type="button" id="manual-clear" class="secondary-button">Clear filters</button></div>`;
     toc.querySelectorAll("[data-manual-jump]").forEach(button=>button.onclick=()=>document.getElementById(`manual-${button.dataset.manualJump}`)?.scrollIntoView({behavior:"smooth",block:"start"}));
     const clear=document.getElementById("manual-clear");if(clear)clear.onclick=()=>{activeCategory="All";input.value="";app.querySelectorAll("[data-manual-category]").forEach(button=>button.classList.toggle("active",button.dataset.manualCategory==="All"));drawManual()};
   }
@@ -246,5 +246,20 @@ function render(){
   renderStep(a,p,r.step);
 }
 homeButton.onclick=()=>setRoute({});
+const cornerMenuButton=document.getElementById("corner-menu-button");
+const cornerMenuList=document.getElementById("corner-menu-list");
+function closeCornerMenu(){cornerMenuList.hidden=true;cornerMenuButton.setAttribute("aria-expanded","false")}
+cornerMenuButton.onclick=()=>{const open=cornerMenuList.hidden;cornerMenuList.hidden=!open;cornerMenuButton.setAttribute("aria-expanded",String(open))};
+cornerMenuList.onclick=event=>{
+  const target=event.target.closest("[data-corner-nav]");if(!target)return;
+  closeCornerMenu();
+  const destination=target.dataset.cornerNav;
+  if(destination==="home")return setRoute({});
+  if(destination==="assets")return setRoute({view:"assets"});
+  if(destination==="systems")return setRoute({view:"systems"});
+  if(destination==="manual")return setRoute({view:"manual"});
+  if(destination==="ask")return facilityIqChat.toggle(true);
+};
+document.addEventListener("click",event=>{if(!event.target.closest(".corner-menu"))closeCornerMenu()});
 addEventListener("popstate",render);
 render();
