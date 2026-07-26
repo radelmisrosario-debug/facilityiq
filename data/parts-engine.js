@@ -28,25 +28,18 @@ function facilityIqInventoryPartsForResult(asset,result){
   return facilityIqPartsForAsset(asset.id).filter(part=>facilityIqPartMatchesComponent(part,detected.component));
 }
 
-function facilityIqPartInventoryText(part){
-  const available=part.available!==""?Number(part.available):null;
-  const ordered=part.ordered!==""?Number(part.ordered):null;
-  const minimum=part.minimum!==""?Number(part.minimum):null;
-  const items=[];
-  if(Number.isFinite(available))items.push(`${available} available`);
-  if(Number.isFinite(ordered)&&ordered)items.push(`${ordered} ordered`);
-  if(Number.isFinite(minimum))items.push(`minimum ${minimum}`);
-  return items.join(" · ")||"Inventory quantity not recorded";
+function facilityIqPartSearchUrl(part){
+  const query=[part.name,part.type,part.partNumbers,part.description].filter(Boolean).join(" ");
+  return `https://www.google.com/search?q=${encodeURIComponent(query)}`;
 }
 
 function facilityIqPartCardMarkup(part){
-  const direct=/^https?:\/\//i.test(part.barcode||"")?`<a href="${esc(part.barcode)}" target="_blank" rel="noopener">Supplier link</a>`:"";
-  const details=[part.type,part.partNumbers,part.location,part.unitCost?`$${Number(part.unitCost).toFixed(2)}`:""].filter(Boolean).map(esc).join(" · ");
-  return `<article class="inventory-part"><div><span class="asset-id">PART ${esc(part.id)}</span><h4>${esc(part.name||part.type||"Unnamed part")}</h4><p>${esc(part.description||"No description recorded.")}</p><small>${details}</small><strong>${esc(facilityIqPartInventoryText(part))}</strong></div><div class="inventory-part-actions"><a class="manual-button" href="${esc(part.url)}" target="_blank" rel="noopener">Open in MaintainX</a>${direct}</div></article>`;
+  const price=part.unitCost?`Price: $${Number(part.unitCost).toFixed(2)}`:"Price not recorded";
+  return `<article class="inventory-part"><div><span class="asset-id">FACILITY PART</span><h4>${esc(part.name||part.type||"Unnamed part")}</h4><p>${esc(part.description||"No description recorded.")}</p><strong>${esc(price)}</strong></div><div class="inventory-part-actions"><a class="manual-button" href="${esc(facilityIqPartSearchUrl(part))}" target="_blank" rel="noopener">Search part on Google</a></div></article>`;
 }
 
 function facilityIqAssetPartsMarkup(asset){
   const parts=facilityIqPartsForAsset(asset.id);
   if(!parts.length)return "";
-  return `<details class="asset-parts"><summary>Associated replacement parts (${parts.length})</summary><p class="small-note">Inventory associations imported from the facility parts list. Confirm the installed component and specifications before use.</p><div class="inventory-parts">${parts.map(facilityIqPartCardMarkup).join("")}</div></details>`;
+  return `<details class="asset-parts"><summary>Associated replacement parts (${parts.length})</summary><p class="small-note">Parts associated with this asset. Confirm the installed component and specifications before use.</p><div class="inventory-parts">${parts.map(facilityIqPartCardMarkup).join("")}</div></details>`;
 }

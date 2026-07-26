@@ -110,7 +110,7 @@ function facilityIqReplacementPartSummary(asset,result){
   if(!part)return "No replacement part was specifically indicated by this diagnostic result.";
   return `Candidate replacement: ${part.component}
 Matched facility inventory:
-${part.inventoryParts.length?part.inventoryParts.map(item=>`- ${item.name||item.type} (MaintainX ${item.id}; ${facilityIqPartInventoryText(item)}): ${item.url}`).join("\n"):"No associated inventory match for this component."}
+${part.inventoryParts.length?part.inventoryParts.map(item=>`- ${item.name||item.type} (${item.unitCost?`$${Number(item.unitCost).toFixed(2)}`:"price not recorded"}): ${facilityIqPartSearchUrl(item)}`).join("\n"):"No associated part match for this component."}
 Search specification: ${part.query}
 Part search: ${part.searchUrl}
 ${part.officialLookup?`OEM parts lookup: ${part.officialLookup}\n`:""}${asset.manual?`Asset manual: ${new URL(asset.manual,location.href).href}\n`:""}Exact part number: ${part.exactPart?.partNumber||"Not verified — match the installed part, full model, serial number, ratings, connections, and revision before ordering."}`;
