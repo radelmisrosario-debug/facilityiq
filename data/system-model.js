@@ -71,19 +71,19 @@ const facilitySystems={
     commonSymptoms:[{name:"Low hot-water DP",checks:["Verify DP transmitter against calibrated gauges.","Check HWP lead/lag status, command, VFD speed, and actual pump DP.","Confirm pump rotation, valve lineup, strainers, and available boiler supply temperature."]}]
   },
   controlAir:{
-    id:"controlAir",name:"AHU Pneumatic Control-Air System",description:"Dedicated control-air compressor, dryer, and distribution serving the pneumatic heating and cooling valves at the building AHUs.",
+    id:"controlAir",name:"Pneumatic Control-Air System",description:"Dedicated control-air compressor, dryer, and distribution serving AHU heating/cooling valves and pneumatic fume-hood damper actuators.",
     notes:[
-      "Control-AC is the dedicated source for AHU pneumatic valve control air.",
+      "Control-AC is the dedicated source for AHU pneumatic valve control air and pneumatic fume-hood damper actuators.",
       "The Control Air Dryer conditions control air before it reaches the distribution header.",
       "House Air Compressors 01–03 do not supply the AHU controls; they serve laboratory compressed-air demand.",
       "AHU heating valves are normally open; AHU cooling valves are normally closed.",
-      "Loss of control air can open heating while closing cooling, creating a high-temperature condition."
+      "Loss of control air can open AHU heating while closing AHU cooling and can prevent fume-hood dampers from maintaining commanded airflow."
     ],
     nodes:[
       {id:"Control-AC",label:"Control Air Compressor",sub:"Control-AC · Room 805",type:"pump",asset:"Control-AC",x:50,y:15},
       {id:"Control-AC-Air-Dryer",label:"Control Air Dryer",sub:"Control-AC-Air-Dryer · Room 805",type:"load",asset:"Control-AC-Air-Dryer",x:50,y:36},
       {id:"AIR-HEADER",label:"Control-Air Header",sub:"Receiver / filters / regulators",type:"header",x:50,y:58},
-      {id:"AHU-PNEUMATICS",label:"AHU Pneumatic Valves",sub:"Heating NO · Cooling NC",type:"load",x:50,y:82}
+      {id:"AHU-PNEUMATICS",label:"AHU Valves + Hood Actuators",sub:"AHU heating NO · cooling NC · pneumatic hood dampers",type:"load",x:50,y:82}
     ],
     links:[["Control-AC","Control-AC-Air-Dryer"],["Control-AC-Air-Dryer","AIR-HEADER"],["AIR-HEADER","AHU-PNEUMATICS"]],
     commonSymptoms:[
@@ -125,6 +125,8 @@ const facilitySystems={
       "EF-25 and EF-26 serve all fume hoods in Labs 415 and 420 plus the sink exhaust in Lab 414.",
       "EF-27 and EF-28 serve all fume hoods in Labs 450 and 460.",
       "EF-30 and EF-31 serve all Bio-side laboratory fume hoods and laboratory exhaust points.",
+      "All laboratories are single-pass: AHUs supply conditioned air and the laboratory exhaust systems discharge it outdoors.",
+      "Siemens-controlled fume hoods are visible in Desigo; authorized operators can review airflow and adjust approved setpoints. Their damper actuators are pneumatic and depend on Control-AC.",
       "Each pair shares ductwork; assess both fans and the common duct before isolating the complaint to one fan."
       ,"The source operations manual describes Desigo duct-static control with roof dampers modulating as system pressure changes."
     ],
