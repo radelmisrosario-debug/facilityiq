@@ -109,7 +109,7 @@ function renderHome(){
       <span class="launch-link">Ask a question <b>→</b></span>
     </button>
   </div>
-  <footer class="product-footer"><div><img src="assets/reliant-facility-solutions-logo.png" alt="" /><span>FacilityIQ</span></div><p><strong>Work safely.</strong> FacilityIQ supports trained personnel and does not replace LOTO, permits, site procedures, or manufacturer instructions.</p></footer>`;
+  <footer class="product-footer"><div><span class="footer-fiq-mark" aria-hidden="true">IQ</span><span>FacilityIQ</span></div><p><strong>Work safely.</strong> FacilityIQ supports trained personnel and does not replace LOTO, permits, site procedures, or manufacturer instructions.</p></footer>`;
   document.getElementById("hero-assets-button").onclick=()=>setRoute({view:"assets"});
   document.getElementById("hero-ask-button").onclick=()=>facilityIqChat.toggle(true);
   document.getElementById("assets-button").onclick=()=>setRoute({view:"assets"});
